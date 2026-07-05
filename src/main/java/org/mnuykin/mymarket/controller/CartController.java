@@ -1,5 +1,6 @@
 package org.mnuykin.mymarket.controller;
 
+import org.mnuykin.mymarket.model.Item;
 import org.mnuykin.mymarket.model.ItemAction;
 import org.mnuykin.mymarket.service.CartService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,11 +11,13 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.util.List;
+
 @Controller
 @RequestMapping("/cart")
 public class CartController {
 
-    private CartService cartService;
+    final private CartService cartService;
 
     @Autowired
     public CartController(CartService cartService){
@@ -23,19 +26,18 @@ public class CartController {
 
     @GetMapping
     public String getCart(Model model){
-        //TODO
-        model.addAttribute("items", null);
-        model.addAttribute("total", null);
+        model.addAttribute("items", cartService.getItems());
+        model.addAttribute("total", cartService.getTotal());
         return "cart";
     }
 
     @PostMapping
     public String postCart(@RequestParam Long id,
-                           @RequestParam ItemAction itemAction,
+                           @RequestParam ItemAction action,
                             Model model){
-        //TODO
-        model.addAttribute("items", null);
-        model.addAttribute("total", null);
+        cartService.executeAction(id, action);
+        model.addAttribute("items", cartService.getItems());
+        model.addAttribute("total", cartService.getTotal());
         return "cart";
     }
 }

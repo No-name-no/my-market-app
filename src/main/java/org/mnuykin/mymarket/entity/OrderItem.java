@@ -4,9 +4,6 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.io.Serializable;
-import java.math.BigDecimal;
-
 @Getter
 @Setter
 @Entity
@@ -23,5 +20,5 @@ public class OrderItem  {
     private Item item;
 
     private int quantity;
-    private BigDecimal price;
+    private Long price;
 }
