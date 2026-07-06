@@ -5,13 +5,14 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.List;
+
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
 @Setter
-public class Paging {
-    private int pageSize;
-    private int pageNumber;
-    private boolean hasPrevious;
-    private boolean hasNex;
+public class OrderDto {
+    private long id;
+    private List<ItemDto> items;
+    private long totalSum;
 }

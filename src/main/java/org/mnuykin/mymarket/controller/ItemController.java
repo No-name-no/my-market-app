@@ -1,9 +1,9 @@
 package org.mnuykin.mymarket.controller;
 
-import org.mnuykin.mymarket.model.Item;
+import org.mnuykin.mymarket.model.ItemDto;
 import org.mnuykin.mymarket.model.ItemAction;
 import org.mnuykin.mymarket.model.ItemsSort;
-import org.mnuykin.mymarket.model.Paging;
+import org.mnuykin.mymarket.model.PagingDto;
 import org.mnuykin.mymarket.service.CartService;
 import org.mnuykin.mymarket.service.ItemService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,11 +32,11 @@ public class ItemController {
                                 @RequestParam (defaultValue =  "1") Integer pageNumber,
                                 @RequestParam (defaultValue = "5") Integer pageSize,
                                 Model model){
-        Page<Item> itemPage = itemService.findItems(search, sort, pageNumber, pageSize);
+        Page<ItemDto> itemPage = itemService.findItems(search, sort, pageNumber, pageSize);
         model.addAttribute("items", itemPage.getContent()/*TODO:ПЕРЕДЕЛАТЬ по три элемента*/);
         model.addAttribute("search", search);
         model.addAttribute("sort", sort);
-        model.addAttribute("paging", new Paging(
+        model.addAttribute("paging", new PagingDto(
                 itemPage.getSize(),
                 itemPage.getNumber(),
                 itemPage.hasPrevious(),
@@ -65,7 +65,7 @@ public class ItemController {
     @GetMapping("/{id}")
     public String getItem (@PathVariable Long id,
                            Model model){
-        Item item = itemService.getItemById(id);
+        ItemDto item = itemService.getItemById(id);
         model.addAttribute("item", item);
         return  "item";
     }

@@ -1,11 +1,11 @@
 package org.mnuykin.mymarket.service;
 
-import org.mnuykin.mymarket.model.Order;
+import org.mnuykin.mymarket.model.OrderDto;
 
 import java.util.List;
 
 public interface OrderService {
-    List<Order> getOrder();
-    Order getOrderById(Long id);
-    Order create();
+    List<OrderDto> getOrder();
+    OrderDto getOrderById(Long id);
+    OrderDto create();
 }

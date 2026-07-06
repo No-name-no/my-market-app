@@ -9,11 +9,9 @@ import lombok.Setter;
 @AllArgsConstructor
 @Getter
 @Setter
-public class Item {
-    private Long id;
-    private String title;
-    private String description;
-    private String imgPath;
-    private Long price;
-    private int count;
+public class PagingDto {
+    private int pageSize;
+    private int pageNumber;
+    private boolean hasPrevious;
+    private boolean hasNex;
 }

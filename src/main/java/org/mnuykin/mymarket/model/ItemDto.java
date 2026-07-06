@@ -5,14 +5,15 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.util.List;
-
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
 @Setter
-public class Order {
-    private long id;
-    private List<Item> items;
-    private long totalSum;
+public class ItemDto {
+    private Long id;
+    private String title;
+    private String description;
+    private String imgPath;
+    private Long price;
+    private int count;
 }
