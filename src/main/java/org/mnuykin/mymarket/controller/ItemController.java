@@ -13,6 +13,9 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Controller
 @RequestMapping({"/", "/items"})
 public class ItemController {
@@ -33,7 +36,7 @@ public class ItemController {
                                 @RequestParam (defaultValue = "5") Integer pageSize,
                                 Model model){
         Page<ItemDto> itemPage = itemService.findItems(search, sort, pageNumber, pageSize);
-        model.addAttribute("items", itemPage.getContent()/*TODO:ПЕРЕДЕЛАТЬ по три элемента*/);
+        model.addAttribute("items", toAttributeItems(itemPage.getContent()));
         model.addAttribute("search", search);
         model.addAttribute("sort", sort);
         model.addAttribute("paging", new PagingDto(
@@ -77,5 +80,22 @@ public class ItemController {
         cartService.executeAction(id, action);
         model.addAttribute("item", itemService.getItemById(id));
         return  "item";
+    }
+
+    private List<List<ItemDto>> toAttributeItems (List<ItemDto> list) {
+        final int attrSize = 3;
+        final List<List<ItemDto>> attrList = new ArrayList<>();
+
+        for (int i = 0; i < list.size(); i += attrSize) {
+            final int toIndex = Math.min((i + attrSize), list.size());
+            List<ItemDto> row = new ArrayList<>(list.subList(i, toIndex));
+
+            while (row.size() < attrSize) {
+                row.add(ItemDto.mockItem());
+            }
+            attrList.add(row);
+        }
+
+        return attrList;
     }
 }

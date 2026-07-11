@@ -10,10 +10,14 @@ import lombok.Setter;
 @Getter
 @Setter
 public class ItemDto {
-    private Long id;
-    private String title;
-    private String description;
-    private String imgPath;
-    private Long price;
-    private int count;
+    Long id;
+    String title;
+    String description;
+    String imgPath;
+    Long price;
+    int count;
+
+    public static ItemDto mockItem(){
+        return new ItemDto(-1L, null, null, null, 0L, 0);
+    }
 }

@@ -36,8 +36,8 @@ public class OrderController {
 
     @PostMapping("/buy")
     String buy(RedirectAttributes attributes){
-        attributes.addAttribute("order", orderService.create());
+        attributes.addAttribute("id", orderService.create().getId());
         attributes.addAttribute("newOrder", true);
-        return "redirect:/orders";
+        return "redirect:/orders/{id}" ;
     }
 }

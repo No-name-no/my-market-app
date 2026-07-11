@@ -13,6 +13,6 @@ import java.util.List;
 @Setter
 public class OrderDto {
     private long id;
-    private List<ItemDto> items;
     private long totalSum;
+    private List<ItemDto> items;
 }

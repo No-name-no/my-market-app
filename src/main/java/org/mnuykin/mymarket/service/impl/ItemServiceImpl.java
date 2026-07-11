@@ -12,6 +12,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.util.Optional;
 
@@ -29,6 +31,7 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Page<ItemDto> findItems(String search, ItemsSort itemsSort, Integer pageNumber, Integer pageSize) {
         final Sort sort = switch (itemsSort){
             case NO -> Sort.by("title").ascending();
@@ -37,10 +40,18 @@ public class ItemServiceImpl implements ItemService {
         };
         final Pageable pageable = PageRequest.of(pageNumber, pageSize, sort);
 
-        return itemMapper.toDtoPage(itemRepository.findByDescriptionLikeOrTitleLike(search, search, sort, pageable));
+        Page<Item> page;
+        if (StringUtils.hasText(search)){
+            page = itemRepository.findByDescriptionLikeOrTitleLike(search, search, pageable);
+        } else {
+            page = itemRepository.findAll(pageable);
+        }
+
+        return page.map(itemMapper::toDto);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public ItemDto getItemById(Long id) {
         Optional<Item> item = itemRepository.getItemById(id);
         return itemMapper.toDto(item.orElseThrow());

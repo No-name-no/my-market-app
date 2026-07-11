@@ -13,5 +13,5 @@ public class PagingDto {
     private int pageSize;
     private int pageNumber;
     private boolean hasPrevious;
-    private boolean hasNex;
+    private boolean hasNext;
 }
