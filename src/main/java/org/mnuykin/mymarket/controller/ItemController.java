@@ -17,7 +17,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Controller
-@RequestMapping({"/", "/items"})
 public class ItemController {
 
     final private ItemService itemService;
@@ -29,7 +28,7 @@ public class ItemController {
         this.cartService = cartService;
     }
 
-    @GetMapping
+    @GetMapping({"/", "/items"})
     public String getItems (@RequestParam (required = false) String search,
                                 @RequestParam (defaultValue = ItemsSort.DEFAULT) ItemsSort sort,
                                 @RequestParam (defaultValue =  "1") Integer pageNumber,
@@ -49,7 +48,7 @@ public class ItemController {
         return "items";
     }
 
-    @PostMapping
+    @PostMapping({"/", "/items"})
     public String postItems (@RequestParam Long id,
                             @RequestParam String search,
                             @RequestParam (defaultValue = ItemsSort.DEFAULT) ItemsSort sort,
@@ -65,7 +64,7 @@ public class ItemController {
         return "redirect:/items";
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/items/{id}")
     public String getItem (@PathVariable Long id,
                            Model model){
         ItemDto item = itemService.getItemById(id);
@@ -73,7 +72,7 @@ public class ItemController {
         return  "item";
     }
 
-    @PostMapping("/{id}")
+    @PostMapping("/items/{id}")
     public String getItem (@PathVariable Long id,
                            @RequestParam ItemAction action,
                            Model model){

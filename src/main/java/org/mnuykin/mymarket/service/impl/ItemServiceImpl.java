@@ -34,7 +34,7 @@ public class ItemServiceImpl implements ItemService {
     @Transactional(readOnly = true)
     public Page<ItemDto> findItems(String search, ItemsSort itemsSort, Integer pageNumber, Integer pageSize) {
         final Sort sort = switch (itemsSort){
-            case NO -> Sort.by("title").ascending();
+            case ALPHA -> Sort.by("title").ascending();
             case PRICE -> Sort.by("price").ascending();
             default -> Sort.unsorted();
         };
