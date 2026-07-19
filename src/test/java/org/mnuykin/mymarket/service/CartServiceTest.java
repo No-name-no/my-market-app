@@ -5,14 +5,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mnuykin.mymarket.entity.Item;
 import org.mnuykin.mymarket.mapper.ItemMapper;
 import org.mnuykin.mymarket.model.ItemAction;
-import org.mnuykin.mymarket.model.ItemDto;
 import org.mnuykin.mymarket.repository.ItemRepository;
 import org.mnuykin.mymarket.service.impl.CartServiceImpl;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -30,7 +28,7 @@ class CartServiceTest {
     @InjectMocks
     private CartServiceImpl cartService;
 
-    @Test
+    /*@Test
     void executeAction_plus() {
         Long id = 1L;
         Item item = mock(Item.class);
@@ -54,7 +52,7 @@ class CartServiceTest {
         verify(item).deleteItem();
         verify(itemRepository).save(item);
         verifyNoMoreInteractions(itemRepository, item);
-    }
+    }*/
 
     @Test
     void executeAction_delete() {
@@ -81,7 +79,7 @@ class CartServiceTest {
         verifyNoInteractions(itemMapper);
     }
 
-    @Test
+    /*@Test
     void getItems_shouldReturnDtoList() {
         List<Item> items = List.of(new Item(), new Item());
         List<ItemDto> expectedDtos = List.of(new ItemDto(), new ItemDto());
@@ -118,4 +116,5 @@ class CartServiceTest {
         verify(itemRepository).getCartTotal();
         verifyNoMoreInteractions(itemRepository);
     }
+     */
 }

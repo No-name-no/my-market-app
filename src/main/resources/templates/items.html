@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
 
 <head>
     <meta charset="utf-8">
@@ -68,7 +68,7 @@
                                 <input type="hidden" name="search" th:value="${search}">
                                 <input type="hidden" name="sort" th:value="${sort}">
                                 <input type="hidden" name="pageSize" th:value="${paging.pageSize}">
-                                <input type="hidden" name="pageNumber" th:value="${paging.pageNumber}">
+                                <input type="hidden" name="pageNumber" th:value="${paging.pageNumber+1}">
                                 <button type="submit" class="btn btn-outline-secondary" name="action" value="MINUS">-</button>
                                 <span th:text="${item.count}"></span>
                                 <button type="submit" class="btn btn-outline-secondary" name="action" value="PLUS">+</button>
@@ -83,9 +83,9 @@
         <div class="row p-2">
             <div class="col">
                 <div class="hstack gap-3 justify-content-center">
-                    <button type="submit" class="btn btn-light" th:if="${paging.hasPrevious}" name="pageNumber" th:value="${paging.pageNumber-1}" form="main">&larr;</button>
+                    <button type="submit" class="btn btn-light" th:if="${paging.hasPrevious}" name="pageNumber" th:value="${paging.pageNumber}" form="main">&larr;</button>
                     <span th:text="${'Страница: '+paging.pageNumber}"></span>
-                    <button type="submit" class="btn btn-light" th:if="${paging.hasNext}" name="pageNumber" th:value="${paging.pageNumber+1}" form="main">&rarr;</button>
+                    <button type="submit" class="btn btn-light" th:if="${paging.hasNext}" name="pageNumber" th:value="${paging.pageNumber+2}" form="main">&rarr;</button>
                 </div>
             </div>
         </div>

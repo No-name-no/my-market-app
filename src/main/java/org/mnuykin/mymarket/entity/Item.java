@@ -1,11 +1,15 @@
 package org.mnuykin.mymarket.entity;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Entity
 @Table(name = "items")
 public class Item {
@@ -17,17 +21,7 @@ public class Item {
     private String description;
     private String imgPath;
     private Long price;
+
+    @Transient
     private Integer count = 0;
-
-    public void addItem(){
-        if (count < Integer.MAX_VALUE) {
-            count++;
-        }
-    }
-
-    public void deleteItem(){
-        if (count > 0) {
-            count--;
-        }
-    }
 }

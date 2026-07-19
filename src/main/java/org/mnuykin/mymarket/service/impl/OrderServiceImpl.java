@@ -1,11 +1,12 @@
 package org.mnuykin.mymarket.service.impl;
 
-import org.mnuykin.mymarket.entity.Item;
+import org.mnuykin.mymarket.advice.exception.CartEmptyException;
+import org.mnuykin.mymarket.entity.CartItem;
 import org.mnuykin.mymarket.entity.Order;
 import org.mnuykin.mymarket.entity.OrderItem;
 import org.mnuykin.mymarket.mapper.OrderMapper;
 import org.mnuykin.mymarket.model.OrderDto;
-import org.mnuykin.mymarket.repository.ItemRepository;
+import org.mnuykin.mymarket.repository.CartRepository;
 import org.mnuykin.mymarket.repository.OrderRepository;
 import org.mnuykin.mymarket.service.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,14 +21,14 @@ import java.util.Optional;
 public class OrderServiceImpl implements OrderService {
 
     final private OrderRepository orderRepository;
-    final private ItemRepository itemRepository;
+    final private CartRepository cartRepository;
     final private OrderMapper orderMapper;
 
     @Autowired
-    OrderServiceImpl(OrderRepository orderRepository, ItemRepository itemRepository,
+    OrderServiceImpl(OrderRepository orderRepository, CartRepository cartRepository,
                      OrderMapper orderMapper){
         this.orderRepository = orderRepository;
-        this.itemRepository = itemRepository;
+        this.cartRepository = cartRepository;
         this.orderMapper = orderMapper;
     }
 
@@ -47,16 +48,20 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional
     public OrderDto create() {
-        List<Item> items = itemRepository.findByCountGreaterThan(0);
+        List<CartItem> cartItems = cartRepository.findAll();
+
+        if(cartItems.isEmpty()){
+            throw new CartEmptyException();
+        }
 
         Order order = new Order();
         List<OrderItem> orderItems = new ArrayList<>();
         long totalSum = 0L;
-        for(Item item : items){
+        for(CartItem item : cartItems){
             OrderItem orderItem = new OrderItem();
-            orderItem.setItem(item);
+            orderItem.setItem(item.getItem());
             orderItem.setOrder(order);
-            orderItem.setPrice(item.getPrice());
+            orderItem.setPrice(item.getItem().getPrice());
             orderItem.setQuantity(item.getCount());
             orderItems.add(orderItem);
 
@@ -66,7 +71,7 @@ public class OrderServiceImpl implements OrderService {
         order.setItems(orderItems);
         order.setTotalSum(totalSum);
 
-        itemRepository.clearCart();
+        cartRepository.deleteAll();
         Order saveOrder = orderRepository.save(order);
         return orderMapper.toDto(saveOrder);
     }

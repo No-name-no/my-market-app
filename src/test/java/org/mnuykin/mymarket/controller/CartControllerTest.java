@@ -3,12 +3,6 @@ package org.mnuykin.mymarket.controller;
 import org.junit.jupiter.api.Test;
 import org.mnuykin.mymarket.model.ItemAction;
 import org.mnuykin.mymarket.model.ItemDto;
-import org.mnuykin.mymarket.service.CartService;
-import org.springframework.beans.factory.annotation.Autowired;
-
-import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
 
@@ -16,15 +10,7 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(CartController.class)
-class CartControllerTest {
-
-    @Autowired
-    private MockMvc mockMvc;
-
-    @MockitoBean
-    private CartService cartService;
-
+class CartControllerTest extends BaseControllerTest {
     @Test
     void getCart_shouldReturnCartViewWithItemsAndTotal() throws Exception {
         List<ItemDto> items = List.of(
@@ -35,7 +21,6 @@ class CartControllerTest {
         when(cartService.getItems()).thenReturn(items);
         when(cartService.getTotal()).thenReturn(total);
 
-        // when & then
         mockMvc.perform(get("/cart/items"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("cart"))

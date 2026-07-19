@@ -2,11 +2,6 @@ package org.mnuykin.mymarket.controller;
 
 import org.junit.jupiter.api.Test;
 import org.mnuykin.mymarket.model.OrderDto;
-import org.mnuykin.mymarket.service.OrderService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
 
@@ -14,14 +9,8 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(OrderController.class)
-class OrderControllerTest {
+class OrderControllerTest extends BaseControllerTest{
 
-    @Autowired
-    private MockMvc mockMvc;
-
-    @MockitoBean
-    private OrderService orderService;
 
     @Test
     void getOrders_shouldReturnOrdersViewWithOrders() throws Exception {

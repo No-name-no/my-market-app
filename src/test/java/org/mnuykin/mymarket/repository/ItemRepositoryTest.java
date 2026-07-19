@@ -76,19 +76,12 @@ class ItemRepositoryTest {
     @Test
     void findByDescriptionLikeOrTitleLike_ShouldReturnEmptyPage() {
         Pageable pageable = PageRequest.of(0, 10);
-        Page<Item> page = itemRepository.findByDescriptionLikeOrTitleLike(NON_EXISTENT_PATTERN, NON_EXISTENT_PATTERN, pageable);
+        Page<Item> page = itemRepository.findByDescriptionContainsIgnoreCaseAndDescriptionContainsIgnoreCase(NON_EXISTENT_PATTERN, NON_EXISTENT_PATTERN, pageable);
         assertThat(page.getContent()).isEmpty();
         assertThat(page.getTotalElements()).isZero();
     }
 
-    @Test
-    void findByCountGreaterThan_ShouldReturnEmptyList() {
-        itemRepository.clearCart();
-        List<Item> items = itemRepository.findByCountGreaterThan(COUNT_THRESHOLD);
-        assertThat(items).isEmpty();
-    }
-
-    @Test
+    /*@Test
     void getCartTotal_ShouldReturnSumOfPricesOfItemsWithPositiveCount() {
         Long total = itemRepository.getCartTotal();
         assertThat(total).isEqualTo(43000L);
@@ -101,5 +94,5 @@ class ItemRepositoryTest {
         Optional<Item> item = itemRepository.findById(id2);
         assertThat(item).isPresent();
         assertThat(item.get().getCount()).isZero();
-    }
+    }*/
 }

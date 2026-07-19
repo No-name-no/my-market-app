@@ -1,5 +1,6 @@
 package org.mnuykin.mymarket.controller;
 
+import org.mnuykin.mymarket.model.OrderDto;
 import org.mnuykin.mymarket.service.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -36,7 +37,8 @@ public class OrderController {
 
     @PostMapping("/buy")
     String buy(RedirectAttributes attributes){
-        attributes.addAttribute("id", orderService.create().getId());
+        OrderDto order = orderService.create();
+        attributes.addAttribute("id", order.getId());
         attributes.addAttribute("newOrder", true);
         return "redirect:/orders/{id}" ;
     }

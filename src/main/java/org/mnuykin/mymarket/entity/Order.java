@@ -18,6 +18,6 @@ public class Order {
 
     private Long totalSum;
 
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval=true)
+    @OneToMany(mappedBy="order", cascade = CascadeType.ALL, orphanRemoval=true)
     private List<OrderItem> items;
 }
