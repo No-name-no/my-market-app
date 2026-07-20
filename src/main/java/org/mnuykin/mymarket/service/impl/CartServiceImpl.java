@@ -55,7 +55,7 @@ public class CartServiceImpl implements CartService {
     public List<ItemDto> getItems() {
         return itemMapper.toDtoList(cartRepository.findAll().stream().map(cartItem -> {
             Item item = cartItem.getItem();
-            item.setCount(item.getCount());
+            item.setCount(cartItem.getCount());
             return item;
         }).toList());
     }
