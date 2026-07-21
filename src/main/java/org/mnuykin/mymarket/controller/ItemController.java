@@ -81,8 +81,8 @@ public class ItemController {
                            @RequestParam ItemAction action,
                            RedirectAttributes attributes){
         cartService.executeAction(id, action);
-        attributes.addAttribute("item", itemService.getItemById(id));
-        return  "redirect:item";
+        attributes.addAttribute("id", id);
+        return  "redirect:/item/{id}";
     }
 
     private List<List<ItemDto>> toAttributeItems (List<ItemDto> list) {

@@ -34,7 +34,6 @@ class CartControllerTest extends BaseControllerTest {
 
     @Test
     void postCart_shouldExecuteActionAndReturnCartView() throws Exception {
-        // given
         Long id = 1L;
         ItemAction action = ItemAction.PLUS;
         List<ItemDto> items = List.of(
@@ -43,22 +42,16 @@ class CartControllerTest extends BaseControllerTest {
         );
         Long total = 99L;
 
-        // mock the service calls after action execution
         when(cartService.getItems()).thenReturn(items);
         when(cartService.getTotal()).thenReturn(total);
 
-        // when & then
         mockMvc.perform(post("/cart/items")
                         .param("id", id.toString())
                         .param("action", action.name()))
-                .andExpect(status().isOk())
-                .andExpect(view().name("cart"))
-                .andExpect(model().attribute("items", items))
-                .andExpect(model().attribute("total", total));
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/cart/items"));
 
         verify(cartService, times(1)).executeAction(id, action);
-        verify(cartService, times(1)).getItems();
-        verify(cartService, times(1)).getTotal();
         verifyNoMoreInteractions(cartService);
     }
 }

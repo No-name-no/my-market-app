@@ -25,14 +25,14 @@ class ItemControllerTest extends BaseControllerTest {
                 new ItemDto(4L, "Product4", "Desc4", "img4.jpg", 400L, 3)
         );
         Page<ItemDto> page = new PageImpl<>(items);
-        when(itemService.findItems(null, ItemsSort.NO, 1, 5)).thenReturn(page);
+        when(itemService.findItems(null, ItemsSort.NO, 0, 5)).thenReturn(page);
 
         mockMvc.perform(get("/items"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("items"))
                 .andExpect(model().attributeExists("items", "sort", "paging"))
                 .andExpect(model().attribute("sort", ItemsSort.NO));
-        verify(itemService, times(1)).findItems(null, ItemsSort.NO, 1, 5);
+        verify(itemService, times(1)).findItems(null, ItemsSort.NO, 0, 5);
         verifyNoMoreInteractions(itemService);
         verifyNoInteractions(cartService);
     }
@@ -47,7 +47,7 @@ class ItemControllerTest extends BaseControllerTest {
                 new ItemDto(10L, "Product10", "Desc10", "img10.jpg", 500L, 1)
         );
         Page<ItemDto> page = new PageImpl<>(items);
-        when(itemService.findItems(search, sort, pageNumber, pageSize)).thenReturn(page);
+        when(itemService.findItems(search, sort, pageNumber-1, pageSize)).thenReturn(page);
 
         mockMvc.perform(get("/items")
                         .param("search", search)
@@ -59,7 +59,7 @@ class ItemControllerTest extends BaseControllerTest {
                 .andExpect(model().attribute("search", search))
                 .andExpect(model().attribute("sort", sort));
 
-        verify(itemService, times(1)).findItems(search, sort, pageNumber, pageSize);
+        verify(itemService, times(1)).findItems(search, sort, pageNumber-1, pageSize);
         verifyNoMoreInteractions(itemService);
     }
 
@@ -115,12 +115,10 @@ class ItemControllerTest extends BaseControllerTest {
 
         mockMvc.perform(post("/items/{id}", id)
                         .param("action", action.name()))
-                .andExpect(status().isOk())
-                .andExpect(view().name("item"))
-                .andExpect(model().attribute("item", updatedItem));
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/item/" + id));
 
         verify(cartService, times(1)).executeAction(id, action);
-        verify(itemService, times(1)).getItemById(id);
         verifyNoMoreInteractions(cartService, itemService);
     }
 }

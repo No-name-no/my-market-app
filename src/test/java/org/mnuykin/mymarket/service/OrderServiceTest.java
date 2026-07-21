@@ -7,9 +7,8 @@ import org.mnuykin.mymarket.model.OrderDto;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 class OrderServiceTest extends BaseServiceTest{
 
@@ -41,5 +40,7 @@ class OrderServiceTest extends BaseServiceTest{
         OrderDto getOrder = orderDtos.getFirst();
         assertEquals(getOrder, orderDto);
 
+        List<ItemDto> itemDtoList = cartService.getItems();
+        assertTrue(itemDtoList.isEmpty());
     }
 }

@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 @RequestMapping("/cart/items")
@@ -31,11 +30,8 @@ public class CartController {
 
     @PostMapping
     public String postCart(@RequestParam Long id,
-                           @RequestParam ItemAction action,
-                           RedirectAttributes attributes){
+                           @RequestParam ItemAction action){
         cartService.executeAction(id, action);
-        attributes.addAttribute("items", cartService.getItems());
-        attributes.addAttribute("total", cartService.getTotal());
-        return "redirect:/cart";
+        return "redirect:/cart/items";
     }
 }
