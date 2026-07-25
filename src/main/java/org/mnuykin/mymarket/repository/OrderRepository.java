@@ -1,10 +1,10 @@
 package org.mnuykin.mymarket.repository;
 
 import org.mnuykin.mymarket.entity.Order;
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.repository.reactive.ReactiveCrudRepository;
+import reactor.core.publisher.Mono;
 
-import java.util.Optional;
 
-public interface OrderRepository extends JpaRepository<Order, Long> {
-    Optional<Order> getOrderById(Long id);
+public interface OrderRepository extends ReactiveCrudRepository<Order, Long> {
+    Mono<Order> getOrderById(Long id);
 }

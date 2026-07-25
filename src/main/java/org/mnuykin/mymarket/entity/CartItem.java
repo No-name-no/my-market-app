@@ -1,29 +1,28 @@
 package org.mnuykin.mymarket.entity;
 
-import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.Table;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Entity
 @Table(name = "cart_items")
 public class CartItem {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column("id")
     Long id;
 
-    @OneToOne
-    @MapsId
-    @JoinColumn(nullable = false)
-    private Item item;
+    @Column("item_id")
+    private Long itemId;
 
-    @Column(nullable = false)
+    @Column("count")
     @NotNull
     private Integer count = 1;
 

@@ -1,12 +1,11 @@
 package org.mnuykin.mymarket.entity;
 
-import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.data.relational.core.mapping.Table;
 
 @Getter
 @Setter
-@Entity
 @Table(name = "order_items")
 public class OrderItem  {
     @EmbeddedId

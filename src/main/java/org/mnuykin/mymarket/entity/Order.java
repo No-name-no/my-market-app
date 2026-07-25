@@ -1,23 +1,21 @@
 package org.mnuykin.mymarket.entity;
 
-import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.Table;
 
 import java.util.List;
 
 @Getter
 @Setter
-@Entity
 @Table(name = "orders")
 public class Order {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id", nullable = false)
+    @Column("id")
     private Long id;
 
+    @Column("total_sum")
     private Long totalSum;
-
-    @OneToMany(mappedBy="order", cascade = CascadeType.ALL, orphanRemoval=true)
-    private List<OrderItem> items;
 }
