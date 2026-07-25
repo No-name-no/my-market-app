@@ -1,11 +1,11 @@
 package org.mnuykin.mymarket.service;
 
 import org.mnuykin.mymarket.model.OrderDto;
-
-import java.util.List;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 public interface OrderService {
-    List<OrderDto> getOrder();
-    OrderDto getOrderById(Long id);
-    OrderDto create();
+    Flux<OrderDto> getOrder();
+    Mono<OrderDto> getOrderById(Long id);
+    Mono<OrderDto> create();
 }

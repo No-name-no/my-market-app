@@ -1,7 +1,6 @@
 package org.mnuykin.mymarket.service.impl;
 
 import org.mnuykin.mymarket.advice.exception.NotFoundException;
-import org.mnuykin.mymarket.entity.CartItem;
 import org.mnuykin.mymarket.entity.Item;
 import org.mnuykin.mymarket.mapper.ItemMapper;
 import org.mnuykin.mymarket.model.ItemDto;
@@ -10,15 +9,12 @@ import org.mnuykin.mymarket.repository.CartRepository;
 import org.mnuykin.mymarket.repository.ItemRepository;
 import org.mnuykin.mymarket.service.ItemService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
-
-import java.util.List;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @Service
 public class ItemServiceImpl implements ItemService {
@@ -38,7 +34,7 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<ItemDto> findItems(String search, ItemsSort itemsSort, Integer pageNumber, Integer pageSize) {
+    public Mono<Page<ItemDto>> findItems(String search, ItemsSort itemsSort, Integer pageNumber, Integer pageSize) {
         final Sort sort = switch (itemsSort){
             case ALPHA -> Sort.by("title").ascending();
             case PRICE -> Sort.by("price").ascending();
@@ -46,41 +42,35 @@ public class ItemServiceImpl implements ItemService {
         };
         final Pageable pageable = PageRequest.of(pageNumber, pageSize, sort);
 
-        List<CartItem> cartItems = cartRepository.findAll();
+        Flux<Item> itemFlux = StringUtils.hasText(search)
+                ? itemRepository.findByDescriptionContainsIgnoreCaseOrTitleContainsIgnoreCase(search, search, pageable)
+                : itemRepository.findAllBy(pageable);
 
-        Page<Item> page;
-        if (StringUtils.hasText(search)){
-            page = itemRepository.findByDescriptionContainsIgnoreCaseOrTitleContainsIgnoreCase(search, search, pageable);
-        } else {
-            page = itemRepository.findAll(pageable);
-        }
+        Flux<ItemDto> itemDtoFlux = itemFlux
+                .flatMap(item ->
+                cartRepository.getCartItemByItem_Id(item.getId())
+                        .map(cartItem -> {
+                            item.setCount(cartItem.getCount());
+                            return itemMapper.toDto(item);
+                        })
+                        .switchIfEmpty(Mono.just(itemMapper.toDto(item)))
+        );
 
-        return page.map((item) -> {
-            //Переделать как-то нормально :)
-            for(CartItem cartItem : cartItems){
-                if (cartItem.getItem().equals(item)){
-                    item.setCount(cartItem.getCount());
-                    break;
-                }
-            }
-
-            return itemMapper.toDto(item);
-        });
+        return itemDtoFlux.collectList().zipWith(this.itemRepository.count()).map(
+                p -> new PageImpl<>(p.getT1(), pageable, p.getT2()));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public ItemDto getItemById(Long id) {
-        Item item = itemRepository.getItemById(id).orElseThrow(() -> new NotFoundException(id));
-
-        List<CartItem> cartItems = cartRepository.findAll();
-        for(CartItem cartItem : cartItems){
-            if (cartItem.getItem().equals(item)){
-                item.setCount(cartItem.getCount());
-                break;
-            }
-        }
-
-        return itemMapper.toDto(item);
+    public Mono<ItemDto> getItemById(Long id) {
+        return itemRepository.getItemById(id)
+                .switchIfEmpty(Mono.error(new NotFoundException(id)))
+                .flatMap(item ->
+                        cartRepository.getCartItemByItem_Id(item.getId())
+                                .map(cartItem -> {
+                                    item.setCount(cartItem.getCount());
+                                    return itemMapper.toDto(item);
+                                })
+                );
     }
 }

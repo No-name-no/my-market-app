@@ -2,6 +2,7 @@ package org.mnuykin.mymarket.mapper;
 
 import org.mapstruct.Mapper;
 import org.mnuykin.mymarket.entity.Order;
+import org.mnuykin.mymarket.entity.OrderItem;
 import org.mnuykin.mymarket.model.OrderDto;
 
 import java.util.List;
@@ -9,6 +10,6 @@ import java.util.List;
 @Mapper(componentModel = "spring",
         uses = {OrderItemMapper.class})
 public interface OrderMapper {
-    OrderDto toDto (Order order);
+    OrderDto toDto (Order order, List<OrderItem> orderItems);
     List<OrderDto> toListDto (List<Order> orders);
 }

@@ -8,5 +8,6 @@ import reactor.core.publisher.Mono;
 
 public interface ItemRepository extends ReactiveCrudRepository<Item, Long> {
     Mono<Item> getItemById(Long id);
+    Flux<Item> findAllBy(Pageable pageable);
     Flux<Item> findByDescriptionContainsIgnoreCaseOrTitleContainsIgnoreCase(String description, String description1, Pageable pageable);
 }

@@ -2,7 +2,6 @@ package org.mnuykin.mymarket.service.impl;
 
 import org.mnuykin.mymarket.advice.exception.NotFoundException;
 import org.mnuykin.mymarket.entity.CartItem;
-import org.mnuykin.mymarket.entity.Item;
 import org.mnuykin.mymarket.mapper.ItemMapper;
 import org.mnuykin.mymarket.model.ItemDto;
 import org.mnuykin.mymarket.model.ItemAction;
@@ -12,9 +11,8 @@ import org.mnuykin.mymarket.service.CartService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.Objects;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @Service
 public class CartServiceImpl implements CartService {
@@ -33,36 +31,42 @@ public class CartServiceImpl implements CartService {
 
     @Override
     @Transactional
-    public void executeAction(Long id, ItemAction action) {
-        Item item = itemRepository.getItemById(id).orElseThrow(() -> new NotFoundException(id));
-        CartItem cartItem = cartRepository.getCartItemByItem_Id(item.getId()).orElse(new CartItem(null, item, 0));
-
-        switch (action){
-            case PLUS -> cartItem.addItem();
-            case MINUS -> cartItem.deleteItem();
-            case DELETE -> cartItem.setCount(0);
-        }
-        if (cartItem.getCount() == 0){
-            cartRepository.delete(cartItem);
-            return;
-        }
-
-        cartRepository.save(cartItem);
+    public Mono<Void> executeAction(Long id, ItemAction action){
+        return itemRepository.getItemById(id)
+                .switchIfEmpty(Mono.error(new NotFoundException(id)))
+                .flatMap(item -> {
+                    return cartRepository.getCartItemByItem_Id(item.getId())
+                            .defaultIfEmpty(new CartItem(null, item.getId(), 0))
+                            .flatMap(cartItem -> {
+                                switch (action){
+                                    case PLUS -> cartItem.addItem();
+                                    case MINUS -> cartItem.deleteItem();
+                                    case DELETE -> cartItem.setCount(0);
+                                }
+                                if (cartItem.getCount() == 0){
+                                    return cartRepository.delete(cartItem);
+                                } else {
+                                    return cartRepository.save(cartItem).then();
+                                }
+                            });
+                });
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<ItemDto> getItems() {
-        return itemMapper.toDtoList(cartRepository.findAll().stream().map(cartItem -> {
-            Item item = cartItem.getItem();
-            item.setCount(cartItem.getCount());
-            return item;
-        }).toList());
+    public Flux<ItemDto> getItems(){
+        return cartRepository.findAll().flatMap(
+                cartItem -> itemRepository.getItemById(cartItem.getId())
+                        .map(item -> {
+                            item.setCount(cartItem.getCount());
+                            return itemMapper.toDto(item);
+                        })
+        );
     }
 
     @Override
     @Transactional(readOnly = true)
-    public long getTotal() {
-        return Objects.requireNonNullElse(cartRepository.getCartTotal(), 0L);
+    public Mono<Long> getTotal() {
+        return cartRepository.getCartTotal().switchIfEmpty(Mono.just(0L));
     }
 }
