@@ -50,7 +50,7 @@ public class ItemServiceImpl implements ItemService {
 
         Page<Item> page;
         if (StringUtils.hasText(search)){
-            page = itemRepository.findByDescriptionContainsIgnoreCaseAndDescriptionContainsIgnoreCase(search, search, pageable);
+            page = itemRepository.findByDescriptionContainsIgnoreCaseOrTitleContainsIgnoreCase(search, search, pageable);
         } else {
             page = itemRepository.findAll(pageable);
         }

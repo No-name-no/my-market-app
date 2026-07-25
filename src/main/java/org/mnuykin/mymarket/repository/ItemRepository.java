@@ -9,5 +9,5 @@ import java.util.Optional;
 
 public interface ItemRepository extends JpaRepository<Item, Long> {
     Optional<Item> getItemById(Long id);
-    Page<Item> findByDescriptionContainsIgnoreCaseAndDescriptionContainsIgnoreCase(String description, String description1, Pageable pageable);
+    Page<Item> findByDescriptionContainsIgnoreCaseOrTitleContainsIgnoreCase(String description, String description1, Pageable pageable);
 }

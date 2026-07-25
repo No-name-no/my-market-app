@@ -116,7 +116,7 @@ class ItemControllerTest extends BaseControllerTest {
         mockMvc.perform(post("/items/{id}", id)
                         .param("action", action.name()))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/item/" + id));
+                .andExpect(redirectedUrl("/items/" + id));
 
         verify(cartService, times(1)).executeAction(id, action);
         verifyNoMoreInteractions(cartService, itemService);

@@ -25,6 +25,16 @@ public class ItemServiceTest extends BaseServiceTest{
     }
 
     @Test
+    void findItems_withSearchByTitle_shouldReturnFilteredItems(){
+        Page<ItemDto> itemDtos = itemService.findItems(title, ItemsSort.NO, 0, 2);
+        assertNotNull(itemDtos);
+        assertEquals(1, itemDtos.getTotalElements());
+        assertEquals(1, itemDtos.getTotalPages());
+        assertEquals(1, itemDtos.getContent().size());
+        assertEquals(description, itemDtos.getContent().getFirst().getDescription());
+    }
+
+    @Test
     void getItemById_shouldReturnItemDto(){
         ItemDto itemDto = itemService.getItemById(id);
 

@@ -17,7 +17,7 @@ import org.springframework.test.context.jdbc.Sql;
 @Sql("/test-data.sql")
 @ActiveProfiles("test")
 public abstract class BaseServiceTest {
-    final protected Long id = 7L;
+    final protected Long id = 1000L;
     final protected String title = "Камаз лимонов 1";
     final protected String description = "Это я - Камаз Эдичка";
     final protected String img_path = "limon.jpg";

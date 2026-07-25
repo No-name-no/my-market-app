@@ -1,6 +1,7 @@
 package org.mnuykin.mymarket.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -22,8 +23,9 @@ public class CartItem {
     @JoinColumn(nullable = false)
     private Item item;
 
-    @JoinColumn(nullable = false)
-    private Integer count;
+    @Column(nullable = false)
+    @NotNull
+    private Integer count = 1;
 
     public void addItem(){
         if (count < Integer.MAX_VALUE) {

@@ -82,7 +82,7 @@ public class ItemController {
                            RedirectAttributes attributes){
         cartService.executeAction(id, action);
         attributes.addAttribute("id", id);
-        return  "redirect:/item/{id}";
+        return "redirect:/items/{id}";
     }
 
     private List<List<ItemDto>> toAttributeItems (List<ItemDto> list) {
