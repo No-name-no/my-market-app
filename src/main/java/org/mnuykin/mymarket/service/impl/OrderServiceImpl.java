@@ -71,8 +71,10 @@ public class OrderServiceImpl implements OrderService {
                 .collectList()
                 .flatMap(
                         cartItems -> {
-                            return orderRepository.save(new Order(null, cartItems.stream().mapToLong(item -> item.price() * item.count()).sum()))
-                                    .flatMap(
+                            return orderRepository.save(
+                                        new Order(null, cartItems.stream().mapToLong(
+                                        item -> item.price() * item.count()).sum())
+                                    ).flatMap(
                                             saveOrder -> {
                                                 List<OrderItem> orderItems = new ArrayList<>();
                                                 for(CartItemData item : cartItems){
@@ -85,7 +87,8 @@ public class OrderServiceImpl implements OrderService {
                                                     orderItems.add(orderItem);
                                                 }
 
-                                                return orderItemRepository.saveAll(orderItems).then(cartRepository.deleteAll())
+                                                return orderItemRepository.saveAll(orderItems)
+                                                        .then(cartRepository.deleteAll())
                                                         .thenReturn(orderMapper.toDto(saveOrder, orderItems));
                                             }
                                     );

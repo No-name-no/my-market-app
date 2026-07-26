@@ -57,10 +57,7 @@ public class CartServiceImpl implements CartService {
     public Flux<ItemDto> getItems(){
         return cartRepository.findAll().flatMap(
                 cartItem -> itemRepository.getItemById(cartItem.getId())
-                        .map(item -> {
-                            item.setCount(cartItem.getCount());
-                            return itemMapper.toDto(item);
-                        })
+                        .map(item -> itemMapper.toDto(item, cartItem.getCount()))
         );
     }
 

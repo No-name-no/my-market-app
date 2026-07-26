@@ -8,8 +8,8 @@ import org.mnuykin.mymarket.model.OrderDto;
 import java.util.List;
 
 @Mapper(componentModel = "spring",
-        uses = {OrderItemMapper.class})
+        uses = {OrderItemMapper.class}
+)
 public interface OrderMapper {
     OrderDto toDto (Order order, List<OrderItem> orderItems);
-    List<OrderDto> toListDto (List<Order> orders);
 }

@@ -9,12 +9,12 @@ import org.mnuykin.mymarket.model.PagingDto;
 import org.mnuykin.mymarket.service.CartService;
 import org.mnuykin.mymarket.service.ItemService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.reactive.result.view.Rendering;
+import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,56 +33,61 @@ public class ItemController {
     }
 
     @GetMapping({"/", "/items"})
-    public String getItems (@RequestParam (required = false) String search,
-                                @RequestParam (defaultValue = ItemsSort.DEFAULT) ItemsSort sort,
-                                @RequestParam (defaultValue = "1") @Min(1) @Max(Integer.MAX_VALUE) Integer pageNumber,
-                                @RequestParam (defaultValue = "5") @Min(1) @Max(100) Integer pageSize,
-                                Model model){
-        Page<ItemDto> itemPage = itemService.findItems(search, sort, Math.max(0, pageNumber-1), pageSize);
-        model.addAttribute("items", toAttributeItems(itemPage.getContent()));
-        model.addAttribute("search", search);
-        model.addAttribute("sort", sort);
-        model.addAttribute("paging", new PagingDto(
-                itemPage.getSize(),
-                itemPage.getNumber(),
-                itemPage.hasPrevious(),
-                itemPage.hasNext()
-        ));
-
-        return "items";
+    public Mono<String> getItems (@RequestParam (required = false) String search,
+                                 @RequestParam (defaultValue = ItemsSort.DEFAULT) ItemsSort sort,
+                                 @RequestParam (defaultValue = "1") @Min(1) @Max(Integer.MAX_VALUE) Integer pageNumber,
+                                 @RequestParam (defaultValue = "5") @Min(1) @Max(100) Integer pageSize,
+                                 Model model){
+        return itemService.findItems(search, sort, Math.max(0, pageNumber-1), pageSize)
+                .doOnNext(
+                        itemPage -> {
+                            model.addAttribute("items", toAttributeItems(itemPage.getContent()));
+                            model.addAttribute("search", search);
+                            model.addAttribute("sort", sort);
+                            model.addAttribute("paging", new PagingDto(
+                                    itemPage.getSize(),
+                                    itemPage.getNumber() + 1,
+                                    itemPage.hasPrevious(),
+                                    itemPage.hasNext()
+                            ));
+                        }
+                ).thenReturn("items");
     }
 
     @PostMapping({"/", "/items"})
-    public String postItems (@RequestParam Long id,
-                            @RequestParam String search,
-                            @RequestParam (defaultValue = ItemsSort.DEFAULT) ItemsSort sort,
-                            @RequestParam (defaultValue =  "1") @Min(1) @Max(Integer.MAX_VALUE) Integer pageNumber,
-                            @RequestParam (defaultValue = "5") @Min(1) @Max(100) Integer pageSize,
-                            @RequestParam ItemAction action, RedirectAttributes attributes){
-        cartService.executeAction(id, action);
-        attributes.addAttribute("search", search);
-        attributes.addAttribute("sort", sort);
-        attributes.addAttribute("pageNumber", pageNumber);
-        attributes.addAttribute("pageSize", pageSize);
-
-        return "redirect:/items";
+    public Mono<Rendering> postItems (@RequestParam Long id,
+                                      @RequestParam String search,
+                                      @RequestParam (defaultValue = ItemsSort.DEFAULT) ItemsSort sort,
+                                      @RequestParam (defaultValue =  "1") @Min(1) @Max(Integer.MAX_VALUE) Integer pageNumber,
+                                      @RequestParam (defaultValue = "5") @Min(1) @Max(100) Integer pageSize,
+                                      @RequestParam ItemAction action){
+        return cartService.executeAction(id, action)
+                .map(unused -> Rendering.redirectTo("/items")
+                        .modelAttribute("search", search)
+                        .modelAttribute("sort", sort)
+                        .modelAttribute("pageNumber", pageNumber)
+                        .modelAttribute("pageSize", pageSize)
+                        .build()
+                );
     }
 
+
     @GetMapping("/items/{id}")
-    public String getItem (@PathVariable Long id,
+    public Mono<String> getItem (@PathVariable Long id,
                            Model model){
-        ItemDto item = itemService.getItemById(id);
-        model.addAttribute("item", item);
-        return  "item";
+        return itemService.getItemById(id)
+                .doOnNext(itemDto -> model.addAttribute("item", itemDto))
+                .thenReturn("item");
     }
 
     @PostMapping("/items/{id}")
-    public String getItem (@PathVariable Long id,
-                           @RequestParam ItemAction action,
-                           RedirectAttributes attributes){
-        cartService.executeAction(id, action);
-        attributes.addAttribute("id", id);
-        return "redirect:/items/{id}";
+    public Mono<Rendering> getItem (@PathVariable Long id,
+                           @RequestParam ItemAction action){
+        return cartService.executeAction(id, action)
+                .map(unused -> Rendering.redirectTo("/items/{id}")
+                        .modelAttribute("id", id)
+                        .build()
+                );
     }
 
     private List<List<ItemDto>> toAttributeItems (List<ItemDto> list) {

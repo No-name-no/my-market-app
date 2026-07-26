@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import reactor.core.publisher.Mono;
 
 @Controller
 @RequestMapping("/cart/items")
@@ -22,16 +23,19 @@ public class CartController {
     }
 
     @GetMapping
-    public String getCart(Model model){
-        model.addAttribute("items", cartService.getItems());
-        model.addAttribute("total", cartService.getTotal());
-        return "cart";
+    public Mono<String> getCart(Model model){
+        return Mono.zip(
+                cartService.getItems().collectList(),
+                cartService.getTotal()
+        ).doOnNext(tuple -> {
+            model.addAttribute("items", tuple.getT1());
+            model.addAttribute("total", tuple.getT2());
+        }).thenReturn("cart");
     }
 
     @PostMapping
-    public String postCart(@RequestParam Long id,
+    public Mono<String> postCart(@RequestParam Long id,
                            @RequestParam ItemAction action){
-        cartService.executeAction(id, action);
-        return "redirect:/cart/items";
+        return cartService.executeAction(id, action).thenReturn("redirect:/cart/items");
     }
 }

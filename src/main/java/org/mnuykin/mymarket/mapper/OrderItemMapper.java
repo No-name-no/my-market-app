@@ -16,5 +16,4 @@ public interface OrderItemMapper {
     @Mapping(target = "price", source = "price")
     @Mapping(target = "title", expression = "java(item.getItem().getTitle())")
     ItemDto toDto(OrderItem item);
-    List<ItemDto> toDto(List<OrderItem> item);
 }

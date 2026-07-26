@@ -26,7 +26,4 @@ public class Item {
     private String imgPath;
     @Column("price")
     private Long price;
-
-    @Transient
-    private Integer count = 0;
 }
