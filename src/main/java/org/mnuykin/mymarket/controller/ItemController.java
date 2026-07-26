@@ -44,7 +44,7 @@ public class ItemController {
         model.addAttribute("sort", sort);
         model.addAttribute("paging", new PagingDto(
                 itemPage.getSize(),
-                itemPage.getNumber(),
+                itemPage.getNumber() + 1,
                 itemPage.hasPrevious(),
                 itemPage.hasNext()
         ));

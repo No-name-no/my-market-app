@@ -21,7 +21,4 @@ public class Item {
     private String description;
     private String imgPath;
     private Long price;
-
-    @Transient
-    private Integer count = 0;
 }

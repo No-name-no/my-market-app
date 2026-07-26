@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 @Service
 public class CartServiceImpl implements CartService {
@@ -35,8 +36,12 @@ public class CartServiceImpl implements CartService {
     @Transactional
     public void executeAction(Long id, ItemAction action) {
         Item item = itemRepository.getItemById(id).orElseThrow(() -> new NotFoundException(id));
-        CartItem cartItem = cartRepository.getCartItemByItem_Id(item.getId()).orElse(new CartItem(null, item, 0));
+        Optional<CartItem> optionalCartItem = cartRepository.getCartItemByItem_Id(item.getId());
 
+        if(optionalCartItem.isEmpty() && action != ItemAction.PLUS)
+            return;
+
+        CartItem cartItem = optionalCartItem.orElse(new CartItem(null, item, 0));
         switch (action){
             case PLUS -> cartItem.addItem();
             case MINUS -> cartItem.deleteItem();
@@ -53,11 +58,10 @@ public class CartServiceImpl implements CartService {
     @Override
     @Transactional(readOnly = true)
     public List<ItemDto> getItems() {
-        return itemMapper.toDtoList(cartRepository.findAll().stream().map(cartItem -> {
-            Item item = cartItem.getItem();
-            item.setCount(cartItem.getCount());
-            return item;
-        }).toList());
+        return cartRepository.findAll().stream()
+                .map(cartItem ->
+                    itemMapper.toDto(cartItem.getItem(),cartItem.getCount()))
+                .toList();
     }
 
     @Override

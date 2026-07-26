@@ -18,7 +18,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 
 @Service
 public class ItemServiceImpl implements ItemService {
@@ -46,7 +48,10 @@ public class ItemServiceImpl implements ItemService {
         };
         final Pageable pageable = PageRequest.of(pageNumber, pageSize, sort);
 
-        List<CartItem> cartItems = cartRepository.findAll();
+        Map<Long, Integer> countInCart = new HashMap<>();
+        for (CartItem cartItem : cartRepository.findAll()){
+            countInCart.put(cartItem.getItem().getId(), cartItem.getCount());
+        }
 
         Page<Item> page;
         if (StringUtils.hasText(search)){
@@ -55,32 +60,14 @@ public class ItemServiceImpl implements ItemService {
             page = itemRepository.findAll(pageable);
         }
 
-        return page.map((item) -> {
-            //Переделать как-то нормально :)
-            for(CartItem cartItem : cartItems){
-                if (cartItem.getItem().equals(item)){
-                    item.setCount(cartItem.getCount());
-                    break;
-                }
-            }
-
-            return itemMapper.toDto(item);
-        });
+        return page.map((item) -> itemMapper.toDto(item, countInCart.get(item.getId())));
     }
 
     @Override
     @Transactional(readOnly = true)
     public ItemDto getItemById(Long id) {
         Item item = itemRepository.getItemById(id).orElseThrow(() -> new NotFoundException(id));
-
-        List<CartItem> cartItems = cartRepository.findAll();
-        for(CartItem cartItem : cartItems){
-            if (cartItem.getItem().equals(item)){
-                item.setCount(cartItem.getCount());
-                break;
-            }
-        }
-
-        return itemMapper.toDto(item);
+        Optional<CartItem> cartItems = cartRepository.getCartItemByItem_Id(item.getId());
+        return itemMapper.toDto(item, cartItems.isPresent() ? cartItems.get().getCount() : 0);
     }
 }

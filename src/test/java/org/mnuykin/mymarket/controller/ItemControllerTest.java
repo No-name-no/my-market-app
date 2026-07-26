@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.mnuykin.mymarket.model.ItemAction;
 import org.mnuykin.mymarket.model.ItemDto;
 import org.mnuykin.mymarket.model.ItemsSort;
+import org.mnuykin.mymarket.model.PagingDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 
@@ -14,7 +15,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 class ItemControllerTest extends BaseControllerTest {
-
 
     @Test
     void getItems_shouldReturnItemsViewWithPagingAndTransformedItems() throws Exception {
@@ -31,7 +31,13 @@ class ItemControllerTest extends BaseControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(view().name("items"))
                 .andExpect(model().attributeExists("items", "sort", "paging"))
-                .andExpect(model().attribute("sort", ItemsSort.NO));
+                .andExpect(model().attribute("sort", ItemsSort.NO))
+                .andExpect(model().attribute("paging", new PagingDto(
+                        page.getSize(),
+                        page.getNumber()+1,
+                        page.hasPrevious(),
+                        page.hasNext()
+                )));
         verify(itemService, times(1)).findItems(null, ItemsSort.NO, 0, 5);
         verifyNoMoreInteractions(itemService);
         verifyNoInteractions(cartService);
@@ -57,7 +63,14 @@ class ItemControllerTest extends BaseControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(view().name("items"))
                 .andExpect(model().attribute("search", search))
-                .andExpect(model().attribute("sort", sort));
+                .andExpect(model().attribute("sort", sort))
+                .andExpect(model().attribute("paging", new PagingDto(
+                        page.getSize(),
+                        page.getNumber()+1,
+                        page.hasPrevious(),
+                        page.hasNext()
+                )));
+
 
         verify(itemService, times(1)).findItems(search, sort, pageNumber-1, pageSize);
         verifyNoMoreInteractions(itemService);

@@ -19,7 +19,6 @@ public class CartItem {
     Long id;
 
     @OneToOne
-    @MapsId
     @JoinColumn(nullable = false)
     private Item item;
 

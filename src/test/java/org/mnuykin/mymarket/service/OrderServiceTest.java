@@ -1,6 +1,7 @@
 package org.mnuykin.mymarket.service;
 
 import org.junit.jupiter.api.Test;
+import org.mnuykin.mymarket.advice.exception.CartEmptyException;
 import org.mnuykin.mymarket.model.ItemAction;
 import org.mnuykin.mymarket.model.ItemDto;
 import org.mnuykin.mymarket.model.OrderDto;
@@ -17,6 +18,11 @@ class OrderServiceTest extends BaseServiceTest{
 
     @Autowired
     private OrderService orderService;
+
+    @Test
+    void buyWithCardEmpty(){
+        assertThrows(CartEmptyException.class, () -> orderService.create());
+    }
 
     @Test
     void buy(){

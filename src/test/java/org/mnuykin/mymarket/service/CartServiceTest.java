@@ -1,6 +1,7 @@
 package org.mnuykin.mymarket.service;
 
 import org.junit.jupiter.api.Test;
+import org.mnuykin.mymarket.advice.exception.NotFoundException;
 import org.mnuykin.mymarket.model.ItemAction;
 import org.mnuykin.mymarket.model.ItemDto;
 import org.mnuykin.mymarket.service.impl.CartServiceImpl;
@@ -15,9 +16,31 @@ class CartServiceTest extends BaseServiceTest {
     private CartServiceImpl cartService;
 
     @Test
-    void test(){
-        //Почему оно активное при профиле тест мне не понятно, вроде бы должно переопределить было бы?
-        //System.out.println("spring.jpa.show-sql: " + (env.getProperty("spring.jpa.show-sql")));
+    void executeGetTotalEmpty(){
+        assertEquals(0L, cartService.getTotal());
+    }
+
+    @Test
+    void executeActionWithNotFoundItem(){
+        assertThrows(NotFoundException.class, () -> cartService.executeAction(-100L, ItemAction.MINUS));
+    }
+
+    @Test
+    void minusAndDeleteExecuteActionWithEmptyCart(){
+        List<ItemDto> itemDtoList = cartService.getItems();
+        assertTrue(itemDtoList.isEmpty());
+
+        cartService.executeAction(id, ItemAction.MINUS);
+        itemDtoList = cartService.getItems();
+        assertTrue(itemDtoList.isEmpty());
+
+        cartService.executeAction(id, ItemAction.DELETE);
+        itemDtoList = cartService.getItems();
+        assertTrue(itemDtoList.isEmpty());
+    }
+
+    @Test
+    void executeAction(){
         long total = cartService.getTotal();
         assertEquals(0L, total);
 
