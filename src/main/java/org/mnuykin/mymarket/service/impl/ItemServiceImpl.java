@@ -48,7 +48,7 @@ public class ItemServiceImpl implements ItemService {
 
         Flux<ItemDto> itemDtoFlux = itemFlux
                 .flatMap(item ->
-                cartRepository.getCartItemByItem_Id(item.getId())
+                cartRepository.getCartItemByItemId(item.getId())
                         .map(cartItem -> itemMapper.toDto(item, cartItem.getCount()))
                         .switchIfEmpty(Mono.just(itemMapper.toDto(item, 0)))
         );
@@ -63,7 +63,7 @@ public class ItemServiceImpl implements ItemService {
         return itemRepository.getItemById(id)
                 .switchIfEmpty(Mono.error(new NotFoundException(id)))
                 .flatMap(item ->
-                        cartRepository.getCartItemByItem_Id(item.getId())
+                        cartRepository.getCartItemByItemId(item.getId())
                                 .map(cartItem -> itemMapper.toDto(item, cartItem.getCount()))
                 );
     }

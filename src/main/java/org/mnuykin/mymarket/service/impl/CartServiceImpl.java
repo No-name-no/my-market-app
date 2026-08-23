@@ -35,7 +35,7 @@ public class CartServiceImpl implements CartService {
         return itemRepository.getItemById(id)
                 .switchIfEmpty(Mono.error(new NotFoundException(id)))
                 .flatMap(item -> {
-                    return cartRepository.getCartItemByItem_Id(item.getId())
+                    return cartRepository.getCartItemByItemId(item.getId())
                             .defaultIfEmpty(new CartItem(null, item.getId(), 0))
                             .flatMap(cartItem -> {
                                 switch (action){

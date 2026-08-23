@@ -6,9 +6,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.servlet.NoHandlerFoundException;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import org.springframework.web.servlet.resource.NoResourceFoundException;
+import org.springframework.web.reactive.result.view.Rendering;
+import reactor.core.publisher.Mono;
 
 import java.util.NoSuchElementException;
 
@@ -16,12 +15,14 @@ import java.util.NoSuchElementException;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler({CartEmptyException.class})
-    public String handleCartEmptyException(RedirectAttributes redirectAttributes) {
-        redirectAttributes.addFlashAttribute("error", "Корзина пуста");
-        return "redirect:/items";
+    public Mono<Rendering> handleCartEmptyException() {
+        return Mono.just(Rendering.redirectTo("/items")
+                .modelAttribute("error", "Корзина пуста")
+                .build()
+        );
     }
 
-    @ExceptionHandler({NoSuchElementException.class, NotFoundException.class, NoHandlerFoundException.class, NoResourceFoundException.class})
+    @ExceptionHandler({NoSuchElementException.class, NotFoundException.class})
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public String handleNotFoundException(Exception exception) {
         return "404";
@@ -30,6 +31,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({Exception.class})
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public String handleAllException(Exception exception) {
+        exception.printStackTrace();
         return "5xx";
     }
 }

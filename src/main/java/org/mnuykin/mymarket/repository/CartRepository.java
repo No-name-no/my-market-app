@@ -12,7 +12,7 @@ public interface CartRepository extends ReactiveCrudRepository<CartItem, Long> {
     @Query("SELECT SUM(item.price * cartItem.count) FROM CartItem cartItem JOIN cartItem.item item")
     Mono<Long> getCartTotal();
 
-    Mono<CartItem> getCartItemByItem_Id(Long id);
+    Mono<CartItem> getCartItemByItemId(Long id);
     Mono<CartItem> findByItemId(Long itemId);
 
     //Long id, Long itemId, Integer count, Long price
