@@ -9,7 +9,7 @@ import reactor.core.publisher.Mono;
 
 public interface CartRepository extends ReactiveCrudRepository<CartItem, Long> {
 
-    @Query("SELECT SUM(item.price * cartItem.count) FROM CartItem cartItem JOIN cartItem.item item")
+    @Query("SELECT SUM(i.price * ci.count) FROM cart_items ci JOIN items i ON ci.item_id = i.id")
     Mono<Long> getCartTotal();
 
     Mono<CartItem> getCartItemByItemId(Long id);

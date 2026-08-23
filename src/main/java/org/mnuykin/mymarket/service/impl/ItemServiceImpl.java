@@ -65,6 +65,7 @@ public class ItemServiceImpl implements ItemService {
                 .flatMap(item ->
                         cartRepository.getCartItemByItemId(item.getId())
                                 .map(cartItem -> itemMapper.toDto(item, cartItem.getCount()))
+                                .switchIfEmpty(Mono.just(itemMapper.toDto(item, 0)))
                 );
     }
 }

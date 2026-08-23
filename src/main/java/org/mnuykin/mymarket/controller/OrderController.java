@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.reactive.result.view.Rendering;
+import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Mono;
 
 @Controller
@@ -43,9 +44,11 @@ public class OrderController {
     @PostMapping("/buy")
     public Mono<Rendering> buy() {
         return orderService.create()
-                .map(order -> Rendering.redirectTo("/orders/{id}")
-                        .modelAttribute("id", order.getId())
-                        .modelAttribute("newOrder", true)
-                        .build());
+                .map(order -> Rendering.redirectTo(
+                        UriComponentsBuilder
+                                .fromPath("/orders/" +  order.getId())
+                                .queryParam("newOrder", true)
+                                .build().toUri().toString()
+                        ).build());
     }
 }

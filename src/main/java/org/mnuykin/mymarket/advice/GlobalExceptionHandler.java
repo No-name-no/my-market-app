@@ -24,14 +24,14 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler({NoSuchElementException.class, NotFoundException.class})
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    public String handleNotFoundException(Exception exception) {
-        return "404";
+    public Mono<Rendering> handleNotFoundException() {
+        return Mono.just(Rendering.view("404").build()); // или .redirectTo("/items").build()
     }
 
     @ExceptionHandler({Exception.class})
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public String handleAllException(Exception exception) {
+    public Mono<Rendering> handleAllException(Exception exception) {
         exception.printStackTrace();
-        return "5xx";
+        return Mono.just(Rendering.view("5xx").build());
     }
 }

@@ -14,10 +14,13 @@ import org.springframework.ui.Model;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.result.view.Rendering;
+import org.springframework.web.server.ServerWebExchange;
+import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Controller
 @Validated
@@ -55,39 +58,47 @@ public class ItemController {
     }
 
     @PostMapping({"/", "/items"})
-    public Mono<Rendering> postItems (@RequestParam Long id,
-                                      @RequestParam String search,
-                                      @RequestParam (defaultValue = ItemsSort.DEFAULT) ItemsSort sort,
-                                      @RequestParam (defaultValue =  "1") @Min(1) @Max(Integer.MAX_VALUE) Integer pageNumber,
-                                      @RequestParam (defaultValue = "5") @Min(1) @Max(100) Integer pageSize,
-                                      @RequestParam ItemAction action){
-        return cartService.executeAction(id, action)
-                .map(unused -> Rendering.redirectTo("/items")
-                        .modelAttribute("search", search)
-                        .modelAttribute("sort", sort)
-                        .modelAttribute("pageNumber", pageNumber)
-                        .modelAttribute("pageSize", pageSize)
-                        .build()
-                );
+    public Mono<Rendering> postItems(ServerWebExchange exchange) {
+        return exchange.getFormData()
+                .flatMap(formData -> {
+                    Long id = Long.parseLong(Objects.requireNonNull(formData.getFirst("id")));
+                    String search = formData.getFirst("search");
+                    ItemsSort sort = ItemsSort.valueOf(formData.getFirst("sort"));
+                    int pageNumber = Integer.parseInt(Objects.requireNonNull(formData.getFirst("pageNumber")));
+                    int pageSize = Integer.parseInt(Objects.requireNonNull(formData.getFirst("pageSize")));
+                    ItemAction action = ItemAction.valueOf(formData.getFirst("action"));
+
+                    return cartService.executeAction(id, action)
+                            .then(Mono.just(
+                                    Rendering.redirectTo(
+                                        UriComponentsBuilder.fromPath("/items")
+                                            .queryParam("search", search)
+                                            .queryParam("pageNumber", pageNumber)
+                                            .queryParam("sort", sort)
+                                            .queryParam("pageSize", pageSize)
+                                            .build().toUri().toString()
+                                        ).build()
+                                    )
+                            );
+                });
     }
 
-
     @GetMapping("/items/{id}")
-    public Mono<String> getItem (@PathVariable Long id,
-                           Model model){
+    public Mono<Rendering> getItem(@PathVariable Long id) {
         return itemService.getItemById(id)
-                .doOnNext(itemDto -> model.addAttribute("item", itemDto))
-                .thenReturn("item");
+                .map(itemDto -> Rendering.view("item")
+                        .modelAttribute("item", itemDto)
+                        .build());
     }
 
     @PostMapping("/items/{id}")
-    public Mono<Rendering> getItem (@PathVariable Long id,
-                           @RequestParam ItemAction action){
-        return cartService.executeAction(id, action)
-                .map(unused -> Rendering.redirectTo("/items/{id}")
-                        .modelAttribute("id", id)
-                        .build()
-                );
+    public Mono<Rendering> getItem2 (@PathVariable Long id,
+                                    ServerWebExchange exchange){
+        return exchange.getFormData().flatMap(formData -> {
+            final ItemAction action = ItemAction.valueOf(formData.getFirst("action"));
+            return cartService.executeAction(id, action)
+                    .then(Mono.just(Rendering.redirectTo("/items/" + id).build()));
+        });
     }
 
     private List<List<ItemDto>> toAttributeItems (List<ItemDto> list) {
