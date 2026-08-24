@@ -16,4 +16,5 @@ public interface OrderItemMapper {
     @Mapping(target = "price", source = "price")
     @Mapping(target = "title", ignore = true/*TODO*/)
     ItemDto toDto(OrderItem item);
+    List<ItemDto> toDto(List<OrderItem> item);
 }

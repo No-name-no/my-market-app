@@ -7,6 +7,7 @@ import org.mnuykin.mymarket.entity.OrderItem;
 import org.mnuykin.mymarket.mapper.OrderMapper;
 import org.mnuykin.mymarket.model.OrderDto;
 import org.mnuykin.mymarket.repository.CartRepository;
+import org.mnuykin.mymarket.repository.ItemRepository;
 import org.mnuykin.mymarket.repository.OrderItemRepository;
 import org.mnuykin.mymarket.repository.OrderRepository;
 import org.mnuykin.mymarket.repository.dto.CartItemData;
@@ -79,7 +80,7 @@ public class OrderServiceImpl implements OrderService {
                                                 List<OrderItem> orderItems = new ArrayList<>();
                                                 for(CartItemData item : cartItems){
                                                     OrderItem orderItem = new OrderItem();
-                                                    orderItem.setItemId(item.itemId());
+                                                    orderItem.setItemId(item.item());
                                                     orderItem.setOrderId(saveOrder.getId());
                                                     orderItem.setPrice(item.price());
                                                     orderItem.setQuantity(item.count());

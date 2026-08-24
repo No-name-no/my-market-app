@@ -15,11 +15,10 @@ public interface CartRepository extends ReactiveCrudRepository<CartItem, Long> {
     Mono<CartItem> getCartItemByItemId(Long id);
     Mono<CartItem> findByItemId(Long itemId);
 
-    //Long id, Long itemId, Integer count, Long price
     @Query("""
             Select\s
-                cartItem.id as is, cartItem.item_id as itemId, cartItem.count as count, item.price as price
-            From order_items cartItem
+                cartItem.id as id, item.id as item, cartItem.count as count, item.price as price
+            From cart_items cartItem
                 Inner join items item on cartItem.item_id = item.id
            \s""")
     Flux<CartItemData> findCartItemDataAll();
