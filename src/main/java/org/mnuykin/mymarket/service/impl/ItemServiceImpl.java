@@ -42,7 +42,8 @@ public class ItemServiceImpl implements ItemService {
         };
         final Pageable pageable = PageRequest.of(pageNumber, pageSize, sort);
 
-        Flux<Item> itemFlux = StringUtils.hasText(search)
+        final boolean byTextSearch = StringUtils.hasText(search);
+        Flux<Item> itemFlux = byTextSearch
                 ? itemRepository.findByDescriptionContainsIgnoreCaseOrTitleContainsIgnoreCase(search, search, pageable)
                 : itemRepository.findAllBy(pageable);
 
@@ -53,7 +54,11 @@ public class ItemServiceImpl implements ItemService {
                         .switchIfEmpty(Mono.just(itemMapper.toDto(item, 0)))
         );
 
-        return itemDtoFlux.collectList().zipWith(this.itemRepository.count()).map(
+        return itemDtoFlux.collectList().zipWith(
+                    byTextSearch
+                        ? itemRepository.countByDescriptionContainsIgnoreCaseOrTitleContainsIgnoreCase(search, search)
+                        : itemRepository.count()
+                ).map(
                 p -> new PageImpl<>(p.getT1(), pageable, p.getT2()));
     }
 

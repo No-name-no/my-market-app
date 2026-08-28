@@ -11,12 +11,13 @@ import org.springframework.data.domain.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class ItemServiceTest extends BaseServiceTest{
+
     @Autowired
     private ItemServiceImpl itemService;
 
     @Test
     void findItems_withSearch_shouldReturnFilteredItems(){
-        Page<ItemDto> itemDtos = itemService.findItems(description, ItemsSort.NO, 0, 2);
+        Page<ItemDto> itemDtos = itemService.findItems(description, ItemsSort.NO, 0, 2).block();
         assertNotNull(itemDtos);
         assertEquals(5, itemDtos.getTotalElements());
         assertEquals(3, itemDtos.getTotalPages());
@@ -26,7 +27,7 @@ public class ItemServiceTest extends BaseServiceTest{
 
     @Test
     void findItems_withSearchByTitle_shouldReturnFilteredItems(){
-        Page<ItemDto> itemDtos = itemService.findItems(title, ItemsSort.NO, 0, 2);
+        Page<ItemDto> itemDtos = itemService.findItems(title, ItemsSort.NO, 0, 2).block();
         assertNotNull(itemDtos);
         assertEquals(1, itemDtos.getTotalElements());
         assertEquals(1, itemDtos.getTotalPages());
@@ -36,7 +37,7 @@ public class ItemServiceTest extends BaseServiceTest{
 
     @Test
     void getItemById_shouldReturnItemDto(){
-        ItemDto itemDto = itemService.getItemById(id);
+        ItemDto itemDto = itemService.getItemById(id).block();
 
         assertNotNull(itemDto);
         assertEquals(id, itemDto.getId());
@@ -49,6 +50,6 @@ public class ItemServiceTest extends BaseServiceTest{
 
     @Test
     void getItemById_shouldThrowException(){
-        assertThrows(NotFoundException.class, () -> itemService.getItemById(-1L));
+        assertThrows(NotFoundException.class, () -> itemService.getItemById(-1L).block());
     }
 }

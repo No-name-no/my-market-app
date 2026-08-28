@@ -20,9 +20,9 @@ class OrderServiceTest extends BaseServiceTest{
 
     @Test
     void buy(){
-        cartService.executeAction(id, ItemAction.PLUS);
-        cartService.executeAction(id, ItemAction.PLUS);
-        OrderDto orderDto = orderService.create();
+        cartService.executeAction(id, ItemAction.PLUS).block();
+        cartService.executeAction(id, ItemAction.PLUS).block();
+        OrderDto orderDto = orderService.create().block();
 
         assertNotNull(orderDto);
         assertEquals(price*2,orderDto.getTotalSum());
@@ -34,13 +34,14 @@ class OrderServiceTest extends BaseServiceTest{
         assertEquals(2, itemDto.getCount());
         assertEquals(price, itemDto.getPrice());
 
-        List<OrderDto> orderDtos = orderService.getOrder();
+        List<OrderDto> orderDtos = orderService.getOrder().collectList().block();
         assertNotNull(orderDtos);
         assertFalse(orderDtos.isEmpty());
         OrderDto getOrder = orderDtos.getFirst();
         assertEquals(getOrder, orderDto);
 
-        List<ItemDto> itemDtoList = cartService.getItems();
+        List<ItemDto> itemDtoList = cartService.getItems().collectList().block();
+        assertNotNull(itemDtoList);
         assertTrue(itemDtoList.isEmpty());
     }
 }

@@ -5,10 +5,12 @@ import org.mnuykin.mymarket.model.ItemAction;
 import org.mnuykin.mymarket.model.ItemDto;
 import org.mnuykin.mymarket.service.impl.CartServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
+import reactor.test.StepVerifier;
 
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 class CartServiceTest extends BaseServiceTest {
     @Autowired
@@ -16,16 +18,16 @@ class CartServiceTest extends BaseServiceTest {
 
     @Test
     void test(){
-        //Почему оно активное при профиле тест мне не понятно, вроде бы должно переопределить было бы?
-        //System.out.println("spring.jpa.show-sql: " + (env.getProperty("spring.jpa.show-sql")));
-        long total = cartService.getTotal();
-        assertEquals(0L, total);
+        assertEquals(0L, cartService.getTotal().block());
 
-        List<ItemDto> itemDtoList = cartService.getItems();
+        List<ItemDto> itemDtoList = cartService.getItems().collectList().block();
+        assertNotNull(itemDtoList);
         assertTrue(itemDtoList.isEmpty());
 
-        cartService.executeAction(id, ItemAction.PLUS);
-        itemDtoList = cartService.getItems();
+        StepVerifier.create(cartService.executeAction(id, ItemAction.PLUS)).expectComplete();
+        System.err.println("total=" + cartService.getTotal().block());
+        itemDtoList = cartService.getItems().collectList().block();
+        assertNotNull(itemDtoList);
         assertFalse(itemDtoList.isEmpty());
         assertEquals(1, itemDtoList.size());
         ItemDto itemDto = itemDtoList.getFirst();
@@ -37,12 +39,12 @@ class CartServiceTest extends BaseServiceTest {
         assertEquals(1, itemDto.getCount());
         assertEquals(price, itemDto.getPrice());
 
-        cartService.executeAction(id, ItemAction.PLUS);
-        total = cartService.getTotal();
-        assertEquals(price*2, total);
+        cartService.executeAction(id, ItemAction.PLUS).block();
+        assertEquals(price*2, cartService.getTotal().block());
 
-        cartService.executeAction(id, ItemAction.DELETE);
-        itemDtoList = cartService.getItems();
+        cartService.executeAction(id, ItemAction.DELETE).block();
+        itemDtoList = cartService.getItems().collectList().block();
+        assertNotNull(itemDtoList);
         assertTrue(itemDtoList.isEmpty());
     }
 }
