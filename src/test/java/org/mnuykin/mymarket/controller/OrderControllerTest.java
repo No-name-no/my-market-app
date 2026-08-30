@@ -1,31 +1,40 @@
 package org.mnuykin.mymarket.controller;
 
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mnuykin.mymarket.model.OrderDto;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.reactive.server.WebTestClient;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
 
 import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 class OrderControllerTest extends BaseControllerTest{
-/*
+
+    @Autowired
+    private WebTestClient webTestClient;
 
     @Test
     void getOrders_shouldReturnOrdersViewWithOrders() throws Exception {
-        // given
-        List<OrderDto> orders = List.of(
+        when(orderService.getOrder()).thenReturn(Flux.just(
                 new OrderDto(1L, 1000L, List.of()),
-                new OrderDto(2L, 2000L, List.of())
+                new OrderDto(2L, 2000L, List.of()))
         );
-        when(orderService.getOrder()).thenReturn(orders);
 
-        // when & then
-        mockMvc.perform(get("/orders"))
-                .andExpect(status().isOk())
-                .andExpect(view().name("orders"))
-                .andExpect(model().attribute("orders", orders));
+        webTestClient.get()
+                .uri("/orders")
+                .exchange()
+                .expectStatus().isOk()
+                .expectHeader().contentTypeCompatibleWith(MediaType.TEXT_HTML)
+                .expectBody(String.class).value(body -> {
+                        Assertions.assertThat(body)
+                                .isNotEmpty()
+                                .contains("order");
+                });
 
         verify(orderService, times(1)).getOrder();
         verifyNoMoreInteractions(orderService);
@@ -33,19 +42,17 @@ class OrderControllerTest extends BaseControllerTest{
 
     @Test
     void getOrder_shouldReturnOrderViewWithOrderAndNewOrderFlag() throws Exception {
-        // given
         Long id = 1L;
         boolean newOrder = true;
-        OrderDto order = new OrderDto(id, 1500L, List.of());
-        when(orderService.getOrderById(id)).thenReturn(order);
-
-        // when & then
-        mockMvc.perform(get("/orders/{id}", id)
-                        .param("newOrder", String.valueOf(newOrder)))
-                .andExpect(status().isOk())
-                .andExpect(view().name("order"))
-                .andExpect(model().attribute("order", order))
-                .andExpect(model().attribute("newOrder", newOrder));
+        when(orderService.getOrderById(id)).thenReturn(Mono.just(new OrderDto(id, 1500L, List.of())));
+        webTestClient.get().uri("/orders/{id}?newOrder={newOrder}", id, newOrder)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(String.class).value(body -> {
+                    Assertions.assertThat(body)
+                            .isNotEmpty()
+                            .contains("order");
+                });
 
         verify(orderService, times(1)).getOrderById(id);
         verifyNoMoreInteractions(orderService);
@@ -55,15 +62,15 @@ class OrderControllerTest extends BaseControllerTest{
     void getOrder_shouldReturnOrderViewWithNewOrderFalseByDefault() throws Exception {
         // given
         Long id = 2L;
-        OrderDto order = new OrderDto(id, 3000L, List.of());
-        when(orderService.getOrderById(id)).thenReturn(order);
+        when(orderService.getOrderById(id)).thenReturn(Mono.just(new OrderDto(id, 3000L, List.of())));
 
-        // when & then - без параметра newOrder
-        mockMvc.perform(get("/orders/{id}", id))
-                .andExpect(status().isOk())
-                .andExpect(view().name("order"))
-                .andExpect(model().attribute("order", order))
-                .andExpect(model().attribute("newOrder", false));
+        webTestClient.get().uri("/orders/{id}", id).exchange()
+                .expectStatus().isOk()
+                .expectBody(String.class).value(body -> {
+                    Assertions.assertThat(body)
+                            .isNotEmpty()
+                            .contains("order");
+                });
 
         verify(orderService, times(1)).getOrderById(id);
         verifyNoMoreInteractions(orderService);
@@ -71,19 +78,14 @@ class OrderControllerTest extends BaseControllerTest{
 
     @Test
     void buy_shouldCreateOrderAndRedirectToOrderWithNewOrderFlag() throws Exception {
-        // given
         long createdId = 10L;
-        OrderDto createdOrder = new OrderDto(createdId, 5000L, List.of());
-        when(orderService.create()).thenReturn(createdOrder);
+        when(orderService.create()).thenReturn(Mono.just(new OrderDto(createdId, 5000L, List.of())));
 
-        // when & then
-        mockMvc.perform(post("/buy"))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/orders/" + createdId + "?newOrder=true"));
+        webTestClient.post().uri("/buy")
+                .exchange().expectStatus().is3xxRedirection()
+                .expectHeader().location("/orders/" + createdId + "?newOrder=true");
 
         verify(orderService, times(1)).create();
         verifyNoMoreInteractions(orderService);
     }
-
- */
 }

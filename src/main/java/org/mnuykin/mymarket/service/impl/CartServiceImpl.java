@@ -57,7 +57,7 @@ public class CartServiceImpl implements CartService {
     @Transactional(readOnly = true)
     public Flux<ItemDto> getItems(){
         return cartRepository.findAll().flatMap(
-                cartItem -> itemRepository.getItemById(cartItem.getId())
+                cartItem -> itemRepository.getItemById(cartItem.getItemId())
                         .map(item -> itemMapper.toDto(item, cartItem.getCount()))
         );
     }

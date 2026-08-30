@@ -1,20 +1,30 @@
 package org.mnuykin.mymarket.controller;
 
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mnuykin.mymarket.model.ItemAction;
 import org.mnuykin.mymarket.model.ItemDto;
 import org.mnuykin.mymarket.model.ItemsSort;
+import org.mnuykin.mymarket.service.CartService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.reactive.server.WebTestClient;
+import org.springframework.web.reactive.function.BodyInserters;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
 
 import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 class ItemControllerTest extends BaseControllerTest {
-    /*
+
+    @Autowired
+    private WebTestClient webTestClient;
+
+    @Autowired
+    private CartService cartService;
 
     @Test
     void getItems_shouldReturnItemsViewWithPagingAndTransformedItems() throws Exception {
@@ -25,13 +35,17 @@ class ItemControllerTest extends BaseControllerTest {
                 new ItemDto(4L, "Product4", "Desc4", "img4.jpg", 400L, 3)
         );
         Page<ItemDto> page = new PageImpl<>(items);
-        when(itemService.findItems(null, ItemsSort.NO, 0, 5)).thenReturn(page);
+        when(itemService.findItems(null, ItemsSort.NO, 0, 5)).thenReturn(Mono.just(page));
 
-        mockMvc.perform(get("/items"))
-                .andExpect(status().isOk())
-                .andExpect(view().name("items"))
-                .andExpect(model().attributeExists("items", "sort", "paging"))
-                .andExpect(model().attribute("sort", ItemsSort.NO));
+        webTestClient.get().uri("/items")
+                .exchange().expectStatus().isOk()
+                .expectHeader().contentTypeCompatibleWith(MediaType.TEXT_HTML)
+                .expectBody(String.class).value(body -> {
+                    Assertions.assertThat(body)
+                            .isNotEmpty()
+                            .contains("items");
+                });
+
         verify(itemService, times(1)).findItems(null, ItemsSort.NO, 0, 5);
         verifyNoMoreInteractions(itemService);
         verifyNoInteractions(cartService);
@@ -47,17 +61,25 @@ class ItemControllerTest extends BaseControllerTest {
                 new ItemDto(10L, "Product10", "Desc10", "img10.jpg", 500L, 1)
         );
         Page<ItemDto> page = new PageImpl<>(items);
-        when(itemService.findItems(search, sort, pageNumber-1, pageSize)).thenReturn(page);
+        when(itemService.findItems(search, sort, pageNumber-1, pageSize)).thenReturn(Mono.just(page));
 
-        mockMvc.perform(get("/items")
-                        .param("search", search)
-                        .param("sort", sort.name())
-                        .param("pageNumber", String.valueOf(pageNumber))
-                        .param("pageSize", String.valueOf(pageSize)))
-                .andExpect(status().isOk())
-                .andExpect(view().name("items"))
-                .andExpect(model().attribute("search", search))
-                .andExpect(model().attribute("sort", sort));
+        webTestClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/items")
+                        .queryParam("search", search)
+                        .queryParam("sort", sort.name())
+                        .queryParam("pageNumber", String.valueOf(pageNumber))
+                        .queryParam("pageSize", String.valueOf(pageSize))
+                        .build())
+                .exchange()
+                .expectStatus().isOk()
+                .expectHeader().contentTypeCompatibleWith(MediaType.TEXT_HTML)
+                .expectBody(String.class).value(body -> {
+                    Assertions.assertThat(body)
+                            .isNotEmpty()
+                            .contains("items")
+                            .contains(search);
+                });
 
         verify(itemService, times(1)).findItems(search, sort, pageNumber-1, pageSize);
         verifyNoMoreInteractions(itemService);
@@ -72,18 +94,21 @@ class ItemControllerTest extends BaseControllerTest {
         int pageSize = 7;
         ItemAction action = ItemAction.PLUS;
 
-        mockMvc.perform(post("/items")
-                        .param("id", id.toString())
-                        .param("search", search)
-                        .param("sort", sort.name())
-                        .param("pageNumber", String.valueOf(pageNumber))
-                        .param("pageSize", String.valueOf(pageSize))
-                        .param("action", action.name()))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/items?search=" + search +
-                        "&sort=" + sort.name() +
-                        "&pageNumber=" + pageNumber +
-                        "&pageSize=" + pageSize));
+        when(cartService.executeAction(id, action)).thenReturn(Mono.empty());
+
+        webTestClient.post()
+                .uri("/items")
+                .body(BodyInserters.fromFormData("id", id.toString())
+                        .with("search", search)
+                        .with("sort", sort.name())
+                        .with("pageNumber", String.valueOf(pageNumber))
+                        .with("pageSize", String.valueOf(pageSize))
+                        .with("action", action.name()))
+                .exchange()
+                .expectStatus().is3xxRedirection()
+                .expectHeader().location("/items?search=" + search + "&pageNumber=" + pageNumber +
+                        "&sort=" + sort.name() + "&pageSize=" + pageSize
+                );
 
         verify(cartService, times(1)).executeAction(id, action);
         verifyNoMoreInteractions(cartService);
@@ -94,12 +119,18 @@ class ItemControllerTest extends BaseControllerTest {
     void getItemById_shouldReturnItemView() throws Exception {
         Long id = 5L;
         ItemDto item = new ItemDto(id, "Special", "Desc", "img.jpg", 999L, 1);
-        when(itemService.getItemById(id)).thenReturn(item);
+        when(itemService.getItemById(id)).thenReturn(Mono.just(item));
 
-        mockMvc.perform(get("/items/{id}", id))
-                .andExpect(status().isOk())
-                .andExpect(view().name("item"))
-                .andExpect(model().attribute("item", item));
+        webTestClient.get()
+                .uri("/items/{id}", id)
+                .exchange()
+                .expectStatus().isOk()
+                .expectHeader().contentTypeCompatibleWith(MediaType.TEXT_HTML)
+                .expectBody(String.class).value(body -> {
+                    Assertions.assertThat(body)
+                            .isNotEmpty()
+                            .contains("items");
+                });
 
         verify(itemService, times(1)).getItemById(id);
         verifyNoMoreInteractions(itemService);
@@ -111,16 +142,17 @@ class ItemControllerTest extends BaseControllerTest {
         Long id = 7L;
         ItemAction action = ItemAction.DELETE;
         ItemDto updatedItem = new ItemDto(id, "Updated", "NewDesc", "new.jpg", 100L, 0);
-        when(itemService.getItemById(id)).thenReturn(updatedItem);
+        when(itemService.getItemById(id)).thenReturn(Mono.just(updatedItem));
+        when(cartService.executeAction(id, action)).thenReturn(Mono.empty());
 
-        mockMvc.perform(post("/items/{id}", id)
-                        .param("action", action.name()))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/items/" + id));
+        webTestClient.post()
+                .uri("/items/{id}", id)
+                .body(BodyInserters.fromFormData("action", action.name()))
+                .exchange()
+                .expectStatus().is3xxRedirection()
+                .expectHeader().location("/items/" + id);
 
         verify(cartService, times(1)).executeAction(id, action);
         verifyNoMoreInteractions(cartService, itemService);
     }
-
-     */
 }

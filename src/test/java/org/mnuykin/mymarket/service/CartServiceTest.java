@@ -24,8 +24,7 @@ class CartServiceTest extends BaseServiceTest {
         assertNotNull(itemDtoList);
         assertTrue(itemDtoList.isEmpty());
 
-        StepVerifier.create(cartService.executeAction(id, ItemAction.PLUS)).expectComplete();
-        System.err.println("total=" + cartService.getTotal().block());
+        cartService.executeAction(id, ItemAction.PLUS).block();
         itemDtoList = cartService.getItems().collectList().block();
         assertNotNull(itemDtoList);
         assertFalse(itemDtoList.isEmpty());
