@@ -18,7 +18,7 @@ class CartControllerTest extends BaseControllerTest {
     private CartService cartService;
 
     @Test
-    void getCart_shouldReturnCartViewWithItemsAndTotal() throws Exception {
+    void getCart_shouldReturnCartViewWithItemsAndTotal() {
         when(cartService.getItems()).thenReturn(Flux.just(
                 new ItemDto(1L, "Product A", "Desc A", "img1.jpg", 100L, 2),
                 new ItemDto(2L, "Product B", "Desc B", "img2.jpg", 200L, 1))
@@ -30,11 +30,10 @@ class CartControllerTest extends BaseControllerTest {
                 .exchange()
                 .expectStatus().isOk()
                 .expectHeader().contentTypeCompatibleWith(MediaType.TEXT_HTML)
-                .expectBody(String.class).value(body -> {
-                    Assertions.assertThat(body)
-                            .isNotEmpty()
-                            .contains("cart");
-                });
+                .expectBody(String.class).value(
+                        body -> Assertions.assertThat(body)
+                        .isNotEmpty()
+                        .contains("cart"));
 
         verify(cartService, times(1)).getItems();
         verify(cartService, times(1)).getTotal();
@@ -43,7 +42,7 @@ class CartControllerTest extends BaseControllerTest {
 
 
     @Test
-    void postCart_shouldExecuteActionAndReturnCartView() throws Exception {
+    void postCart_shouldExecuteActionAndReturnCartView() {
         final Long id = 1L;
         final ItemAction action = ItemAction.PLUS;
         when(cartService.getItems()).thenReturn(Flux.just(

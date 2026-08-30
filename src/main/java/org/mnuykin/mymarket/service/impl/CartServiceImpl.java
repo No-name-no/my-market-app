@@ -1,6 +1,5 @@
 package org.mnuykin.mymarket.service.impl;
 
-import org.h2.message.Trace;
 import org.mnuykin.mymarket.advice.exception.NotFoundException;
 import org.mnuykin.mymarket.entity.CartItem;
 import org.mnuykin.mymarket.mapper.ItemMapper;
@@ -35,22 +34,20 @@ public class CartServiceImpl implements CartService {
     public Mono<Void> executeAction(Long id, ItemAction action){
         return itemRepository.getItemById(id)
                 .switchIfEmpty(Mono.error(new NotFoundException(id)))
-                .flatMap(item -> {
-                    return cartRepository.getCartItemByItemId(item.getId())
-                            .defaultIfEmpty(new CartItem(null, item.getId(), 0))
-                            .flatMap(cartItem -> {
-                                switch (action){
-                                    case PLUS -> cartItem.addItem();
-                                    case MINUS -> cartItem.deleteItem();
-                                    case DELETE -> cartItem.setCount(0);
-                                }
-                                if (cartItem.getCount() == 0){
-                                    return cartRepository.delete(cartItem);
-                                } else {
-                                    return cartRepository.save(cartItem).then();
-                                }
-                            });
-                });
+                .flatMap(item -> cartRepository.getCartItemByItemId(item.getId())
+                        .defaultIfEmpty(new CartItem(null, item.getId(), 0))
+                        .flatMap(cartItem -> {
+                            switch (action){
+                                case PLUS -> cartItem.addItem();
+                                case MINUS -> cartItem.deleteItem();
+                                case DELETE -> cartItem.setCount(0);
+                            }
+                            if (cartItem.getCount() == 0){
+                                return cartRepository.delete(cartItem);
+                            } else {
+                                return cartRepository.save(cartItem).then();
+                            }
+                        }));
     }
 
     @Override

@@ -27,7 +27,7 @@ class ItemControllerTest extends BaseControllerTest {
     private CartService cartService;
 
     @Test
-    void getItems_shouldReturnItemsViewWithPagingAndTransformedItems() throws Exception {
+    void getItems_shouldReturnItemsViewWithPagingAndTransformedItems() {
         List<ItemDto> items = List.of(
                 new ItemDto(1L, "Product1", "Desc1", "img1.jpg", 100L, 2),
                 new ItemDto(2L, "Product2", "Desc2", "img2.jpg", 200L, 1),
@@ -40,11 +40,11 @@ class ItemControllerTest extends BaseControllerTest {
         webTestClient.get().uri("/items")
                 .exchange().expectStatus().isOk()
                 .expectHeader().contentTypeCompatibleWith(MediaType.TEXT_HTML)
-                .expectBody(String.class).value(body -> {
-                    Assertions.assertThat(body)
-                            .isNotEmpty()
-                            .contains("items");
-                });
+                .expectBody(String.class).value(
+                        body -> Assertions.assertThat(body)
+                        .isNotEmpty()
+                        .contains("items")
+                );
 
         verify(itemService, times(1)).findItems(null, ItemsSort.NO, 0, 5);
         verifyNoMoreInteractions(itemService);
@@ -52,7 +52,7 @@ class ItemControllerTest extends BaseControllerTest {
     }
 
     @Test
-    void getItems_withSearchAndPaging_shouldReturnFilteredItems() throws Exception {
+    void getItems_withSearchAndPaging_shouldReturnFilteredItems() {
         String search = "Product";
         ItemsSort sort = ItemsSort.PRICE;
         int pageNumber = 2;
@@ -74,19 +74,18 @@ class ItemControllerTest extends BaseControllerTest {
                 .exchange()
                 .expectStatus().isOk()
                 .expectHeader().contentTypeCompatibleWith(MediaType.TEXT_HTML)
-                .expectBody(String.class).value(body -> {
-                    Assertions.assertThat(body)
-                            .isNotEmpty()
-                            .contains("items")
-                            .contains(search);
-                });
+                .expectBody(String.class).value(
+                        body -> Assertions.assertThat(body)
+                        .isNotEmpty()
+                        .contains("items")
+                        .contains(search));
 
         verify(itemService, times(1)).findItems(search, sort, pageNumber-1, pageSize);
         verifyNoMoreInteractions(itemService);
     }
 
     @Test
-    void postItems_shouldExecuteActionAndRedirectWithAllParameters() throws Exception {
+    void postItems_shouldExecuteActionAndRedirectWithAllParameters() {
         Long id = 1L;
         String search = "test";
         ItemsSort sort = ItemsSort.PRICE;
@@ -116,7 +115,7 @@ class ItemControllerTest extends BaseControllerTest {
     }
 
     @Test
-    void getItemById_shouldReturnItemView() throws Exception {
+    void getItemById_shouldReturnItemView() {
         Long id = 5L;
         ItemDto item = new ItemDto(id, "Special", "Desc", "img.jpg", 999L, 1);
         when(itemService.getItemById(id)).thenReturn(Mono.just(item));
@@ -126,11 +125,10 @@ class ItemControllerTest extends BaseControllerTest {
                 .exchange()
                 .expectStatus().isOk()
                 .expectHeader().contentTypeCompatibleWith(MediaType.TEXT_HTML)
-                .expectBody(String.class).value(body -> {
-                    Assertions.assertThat(body)
-                            .isNotEmpty()
-                            .contains("items");
-                });
+                .expectBody(String.class).value(
+                        body -> Assertions.assertThat(body)
+                        .isNotEmpty()
+                        .contains("items"));
 
         verify(itemService, times(1)).getItemById(id);
         verifyNoMoreInteractions(itemService);
@@ -138,7 +136,7 @@ class ItemControllerTest extends BaseControllerTest {
     }
 
     @Test
-    void postItemById_shouldExecuteActionAndReturnItemViewWithUpdatedItem() throws Exception {
+    void postItemById_shouldExecuteActionAndReturnItemViewWithUpdatedItem() {
         Long id = 7L;
         ItemAction action = ItemAction.DELETE;
         ItemDto updatedItem = new ItemDto(id, "Updated", "NewDesc", "new.jpg", 100L, 0);

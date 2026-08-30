@@ -19,7 +19,7 @@ class OrderControllerTest extends BaseControllerTest{
     private WebTestClient webTestClient;
 
     @Test
-    void getOrders_shouldReturnOrdersViewWithOrders() throws Exception {
+    void getOrders_shouldReturnOrdersViewWithOrders() {
         when(orderService.getOrder()).thenReturn(Flux.just(
                 new OrderDto(1L, 1000L, List.of()),
                 new OrderDto(2L, 2000L, List.of()))
@@ -30,54 +30,53 @@ class OrderControllerTest extends BaseControllerTest{
                 .exchange()
                 .expectStatus().isOk()
                 .expectHeader().contentTypeCompatibleWith(MediaType.TEXT_HTML)
-                .expectBody(String.class).value(body -> {
-                        Assertions.assertThat(body)
-                                .isNotEmpty()
-                                .contains("order");
-                });
+                .expectBody(String.class).value(body -> Assertions.assertThat(body)
+                        .isNotEmpty()
+                        .contains("order")
+                );
 
         verify(orderService, times(1)).getOrder();
         verifyNoMoreInteractions(orderService);
     }
 
     @Test
-    void getOrder_shouldReturnOrderViewWithOrderAndNewOrderFlag() throws Exception {
+    void getOrder_shouldReturnOrderViewWithOrderAndNewOrderFlag() {
         Long id = 1L;
         boolean newOrder = true;
         when(orderService.getOrderById(id)).thenReturn(Mono.just(new OrderDto(id, 1500L, List.of())));
         webTestClient.get().uri("/orders/{id}?newOrder={newOrder}", id, newOrder)
                 .exchange()
                 .expectStatus().isOk()
-                .expectBody(String.class).value(body -> {
-                    Assertions.assertThat(body)
-                            .isNotEmpty()
-                            .contains("order");
-                });
+                .expectBody(String.class).value(
+                        body -> Assertions.assertThat(body)
+                        .isNotEmpty()
+                        .contains("order")
+                );
 
         verify(orderService, times(1)).getOrderById(id);
         verifyNoMoreInteractions(orderService);
     }
 
     @Test
-    void getOrder_shouldReturnOrderViewWithNewOrderFalseByDefault() throws Exception {
+    void getOrder_shouldReturnOrderViewWithNewOrderFalseByDefault() {
         // given
         Long id = 2L;
         when(orderService.getOrderById(id)).thenReturn(Mono.just(new OrderDto(id, 3000L, List.of())));
 
         webTestClient.get().uri("/orders/{id}", id).exchange()
                 .expectStatus().isOk()
-                .expectBody(String.class).value(body -> {
-                    Assertions.assertThat(body)
-                            .isNotEmpty()
-                            .contains("order");
-                });
+                .expectBody(String.class).value(
+                        body -> Assertions.assertThat(body)
+                        .isNotEmpty()
+                        .contains("order")
+                );
 
         verify(orderService, times(1)).getOrderById(id);
         verifyNoMoreInteractions(orderService);
     }
 
     @Test
-    void buy_shouldCreateOrderAndRedirectToOrderWithNewOrderFlag() throws Exception {
+    void buy_shouldCreateOrderAndRedirectToOrderWithNewOrderFlag() {
         long createdId = 10L;
         when(orderService.create()).thenReturn(Mono.just(new OrderDto(createdId, 5000L, List.of())));
 
