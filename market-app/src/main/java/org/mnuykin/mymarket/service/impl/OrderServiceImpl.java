@@ -14,6 +14,7 @@ import org.mnuykin.mymarket.repository.OrderItemRepository;
 import org.mnuykin.mymarket.repository.OrderRepository;
 import org.mnuykin.mymarket.repository.dto.CartItemData;
 import org.mnuykin.mymarket.service.OrderService;
+import org.mnuykin.mymarket.service.PaymentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,14 +29,17 @@ public class OrderServiceImpl implements OrderService {
 
     final private OrderRepository orderRepository;
     final private CartRepository cartRepository;
+    final private OrderItemRepository orderItemRepository;
     final private ItemRepository itemRepository;
+    final private PaymentService paymentService;
+
     final private OrderMapper orderMapper;
     final private OrderItemMapper orderItemMapper;
-    final private OrderItemRepository orderItemRepository;
 
     @Autowired
     OrderServiceImpl(OrderRepository orderRepository, CartRepository cartRepository,
                      OrderItemRepository orderItemRepository, ItemRepository itemRepository,
+                     PaymentService paymentService,
                      OrderMapper orderMapper, OrderItemMapper orderItemMapper){
         this.orderRepository = orderRepository;
         this.cartRepository = cartRepository;
@@ -43,6 +47,7 @@ public class OrderServiceImpl implements OrderService {
         this.orderItemRepository = orderItemRepository;
         this.orderMapper = orderMapper;
         this.orderItemMapper = orderItemMapper;
+        this.paymentService = paymentService;
     }
 
     @Override

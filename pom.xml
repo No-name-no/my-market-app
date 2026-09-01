@@ -23,6 +23,7 @@
     <modules>
         <module>market-app</module>
 	    <module>payment-openapi</module>
+	    <module>payment-service</module>
 	</modules>
     <scm>
 		<connection/>

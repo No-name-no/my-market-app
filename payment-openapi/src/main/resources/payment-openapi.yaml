@@ -3,9 +3,6 @@ info:
   title: Payment Service API
   version: 0.0.1
 
-servers:
-  - url: http://payment-service:8081
-
 paths:
   /payment/balance/{accountId}:
     get:
@@ -72,7 +69,6 @@ components:
       properties:
         balance:
           type: number
-          format: double
 
     execute-request:
       type: object
@@ -82,7 +78,6 @@ components:
       properties:
         amount:
           type: number
-          format: double
 
     execute-response:
       type: object
@@ -96,4 +91,3 @@ components:
             - rejected
         remainingBalance:
           type: number
-          format: double

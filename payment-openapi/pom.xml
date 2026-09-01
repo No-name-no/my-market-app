@@ -10,6 +10,7 @@
     </parent>
 
     <artifactId>payment-openapi</artifactId>
+    <packaging>jar</packaging>
 
     <properties>
         <maven.compiler.source>21</maven.compiler.source>
@@ -47,14 +48,38 @@
                             <goal>generate</goal>
                         </goals>
                         <configuration>
-                            <inputSpec>${project.basedir}/src/main/resources/payment-openapi.yaml</inputSpec>                            <generatorName>spring</generatorName>
-                            <apiPackage>org.mnuykin.api</apiPackage>
-                            <modelPackage>org.mnuykin.domain</modelPackage>
+                            <inputSpec>${project.basedir}/src/main/resources/payment-openapi.yaml</inputSpec>
+                            <generatorName>spring</generatorName>
+                            <apiPackage>org.mnuykin.server.api</apiPackage>
+                            <modelPackage>org.mnuykin.server.domain</modelPackage>
                             <configOptions>
                                 <reactive>true</reactive>
-                                <interfaceOnly>false</interfaceOnly>
+                                <interfaceOnly>true</interfaceOnly>
                                 <library>spring-boot</library>
                                 <useTags>true</useTags>
+                                <generateApiTests>false</generateApiTests>
+                                <generateModelTests>false</generateModelTests>
+                            </configOptions>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>generate-payment-client</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <inputSpec>${project.basedir}/src/main/resources/payment-openapi.yaml</inputSpec>
+                            <generatorName>spring</generatorName>
+                            <apiPackage>org.mnuykin.client.api</apiPackage>
+                            <modelPackage>org.mnuykin.client.domain</modelPackage>
+                            <invokerPackage>org.mnuykin.client.client</invokerPackage>
+                            <configOptions>
+                                <reactive>true</reactive>
+                                <interfaceOnly>true</interfaceOnly>
+                                <library>spring-http-interface</library>
+                                <useTags>true</useTags>
+                                <generateApiTests>false</generateApiTests>
+                                <generateModelTests>false</generateModelTests>
                             </configOptions>
                         </configuration>
                     </execution>
