@@ -1,0 +1,99 @@
+openapi: 3.0.3
+info:
+  title: Payment Service API
+  version: 0.0.1
+
+servers:
+  - url: http://payment-service:8081
+
+paths:
+  /payment/balance/{accountId}:
+    get:
+      operationId: getPaymentBalance
+      summary: Get current balance
+      description: This endpoint retrieves the current balance of a user’s account.
+      tags:
+        - payment
+      parameters:
+        - $ref: '#/components/parameters/account-id-param'
+      responses:
+        '200':
+          description: Balance response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/balance-response'
+        '4XX':
+          description: Client Errors
+        '5XX':
+          description: Server Errors
+
+  /payment/execute/{accountId}:
+    post:
+      operationId: executePayment
+      summary: Execute a payment transaction
+      description: This endpoint executes a payment transaction on the user's account.
+      tags:
+        - payment
+      parameters:
+        - $ref: '#/components/parameters/account-id-param'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/execute-request'
+      responses:
+        '200':
+          description: Payment result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/execute-response'
+        '4XX':
+          description: Client Errors
+        '5XX':
+          description: Server Errors
+
+components:
+  parameters:
+    account-id-param:
+      name: accountId
+      in: path
+      required: true
+      description: Unique identifier of the user account.
+      schema:
+        type: string
+
+  schemas:
+    balance-response:
+      type: object
+      description: Response get current balance
+      properties:
+        balance:
+          type: number
+          format: double
+
+    execute-request:
+      type: object
+      description: Request execute a payment transaction
+      required:
+        - amount
+      properties:
+        amount:
+          type: number
+          format: double
+
+    execute-response:
+      type: object
+      description: Response execute a payment transaction
+      properties:
+        status:
+          type: string
+          enum:
+            - successful
+            - insufficient-funds
+            - rejected
+        remainingBalance:
+          type: number
+          format: double

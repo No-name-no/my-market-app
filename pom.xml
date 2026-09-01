@@ -10,7 +10,8 @@
 	<groupId>org.mnuykin</groupId>
 	<artifactId>my-market-app</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>my-market-app</name>
+    <packaging>pom</packaging>
+    <name>my-market-app</name>
 	<description>My Market Application</description>
 	<url/>
 	<licenses>
@@ -19,7 +20,11 @@
 	<developers>
 		<developer/>
 	</developers>
-	<scm>
+    <modules>
+        <module>market-app</module>
+	    <module>payment-openapi</module>
+	</modules>
+    <scm>
 		<connection/>
 		<developerConnection/>
 		<tag/>
