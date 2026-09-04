@@ -9,8 +9,10 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
+
+import java.util.Objects;
 
 @Controller
 @RequestMapping("/cart/items")
@@ -41,8 +43,11 @@ public class CartController {
     }
 
     @PostMapping
-    public Mono<String> postCart(@RequestParam Long id,
-                           @RequestParam ItemAction action){
-        return cartService.executeAction(id, action).thenReturn("redirect:/cart/items");
+    public Mono<String> postCart(ServerWebExchange exchange){
+        return exchange.getFormData().flatMap(formData -> {
+            final Long id = Long.valueOf(Objects.requireNonNull(formData.getFirst("id")));
+            final ItemAction action = ItemAction.valueOf(formData.getFirst("action"));
+            return cartService.executeAction(id, action).thenReturn("redirect:/cart/items");
+        });
     }
 }
