@@ -6,13 +6,13 @@ import org.mnuykin.mymarket.entity.Item;
 import org.mnuykin.mymarket.mapper.ItemMapper;
 import org.mnuykin.mymarket.model.ItemDto;
 import org.mnuykin.mymarket.model.ItemsSort;
+import org.mnuykin.mymarket.model.PageItemDto;
 import org.mnuykin.mymarket.repository.CartRepository;
 import org.mnuykin.mymarket.repository.ItemRepository;
 import org.mnuykin.mymarket.service.ItemService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
-import org.springframework.data.web.PagedResourcesAssembler;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -40,7 +40,7 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     @Transactional(readOnly = true)
-    public Mono<Page<ItemDto>> findItems(String search, ItemsSort itemsSort, Integer pageNumber, Integer pageSize) {
+    public Mono<PageItemDto> findItems(String search, ItemsSort itemsSort, Integer pageNumber, Integer pageSize) {
         String cacheKey = String.format("items:search=%s:itemsSort=%s:pageNumber=%d:pageSize=%d",
                 search, itemsSort.name(), pageNumber, pageSize
         );
@@ -64,14 +64,20 @@ public class ItemServiceImpl implements ItemService {
                         .switchIfEmpty(Mono.just(itemMapper.toDto(item, 0)))
         );
 
-        return reactiveRedisTemplate.opsForValue().get(cacheKey).map(o -> (Page<ItemDto>) o)
+        return reactiveRedisTemplate.opsForValue().get(cacheKey).map(o -> (PageItemDto) o)
                 .switchIfEmpty(itemDtoFlux.collectList()
                         .zipWith(
                             byTextSearch
                                     ? itemRepository.countByDescriptionContainsIgnoreCaseOrTitleContainsIgnoreCase(search, search)
-                                  : itemRepository.count()
-                        ).map(p -> new PageImpl<>(p.getT1(), pageable, p.getT2()))
-                        .flatMap(itemDtos -> reactiveRedisTemplate.opsForValue()
+                                    : itemRepository.count()
+                        ).map(p -> new PageItemDto(
+                                p.getT1(),
+                                pageable.getPageSize(),
+                                pageable.getPageNumber(),
+                                pageable.hasPrevious(),
+                                pageable.getPageNumber() + 1 < p.getT2(),
+                                p.getT2())
+                        ).flatMap(itemDtos -> reactiveRedisTemplate.opsForValue()
                                 .set(cacheKey,  itemDtos, CacheConfig.CACHE_TTL)
                                 .thenReturn(itemDtos)
                         )

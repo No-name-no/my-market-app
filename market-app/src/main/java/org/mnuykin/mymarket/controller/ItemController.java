@@ -50,8 +50,8 @@ public class ItemController {
                             model.addAttribute("paging", new PagingDto(
                                     itemPage.getSize(),
                                     itemPage.getNumber() + 1,
-                                    itemPage.hasPrevious(),
-                                    itemPage.hasNext()
+                                    itemPage.isHasPrevious(),
+                                    itemPage.isHasNex()
                             ));
                         }
                 ).thenReturn("items");
