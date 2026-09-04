@@ -49,6 +49,10 @@ public class OrderController {
                                 .fromPath("/orders/" +  order.getId())
                                 .queryParam("newOrder", true)
                                 .build().toUri().toString()
-                        ).build());
+                        ).build())
+                .onErrorResume(e -> {
+                    e.printStackTrace();
+                    return Mono.just(Rendering.redirectTo("/cart/items").build());
+                });
     }
 }

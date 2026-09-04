@@ -3,6 +3,7 @@ package org.mnuykin.mymarket.service.impl;
 import org.mnuykin.client.api.PaymentApi;
 import org.mnuykin.client.domain.ExecuteRequest;
 import org.mnuykin.client.domain.ExecuteResponse;
+import org.mnuykin.mymarket.advice.exception.PaymentServiceUnavailableException;
 import org.mnuykin.mymarket.service.PaymentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,14 +20,12 @@ import java.util.Objects;
 public class PaymentServiceImpl implements PaymentService {
     private final String ACCOUNT_ID = "VERY_NICE_ACCOUNT";
     private final PaymentApi paymentApi;
-    private final WebClient healthWebClient;
 
     @Autowired
     PaymentServiceImpl(PaymentApi paymentApi,
                        WebClient.Builder webClientBuilder,
                        @Value("${payment.service.url}") String serviceUrl){
         this.paymentApi = paymentApi;
-        healthWebClient = webClientBuilder.baseUrl(serviceUrl).build();
     }
 
     @Override
@@ -34,6 +33,9 @@ public class PaymentServiceImpl implements PaymentService {
         return paymentApi.getPaymentBalance(ACCOUNT_ID).map(balanceResponseResponseEntity -> {
             assert Objects.requireNonNull(balanceResponseResponseEntity.getBody()).getBalance() != null;
             return balanceResponseResponseEntity.getBody().getBalance().toBigInteger().longValue();
+        }).onErrorResume(e -> {
+            e.printStackTrace();
+            return Mono.error(new PaymentServiceUnavailableException(e.getMessage(), e));
         });
     }
 
@@ -45,17 +47,9 @@ public class PaymentServiceImpl implements PaymentService {
                 .map(executeResponseResponseEntity -> {
                     assert executeResponseResponseEntity.getBody() != null;
                     return executeResponseResponseEntity.getBody().getStatus() == ExecuteResponse.StatusEnum.SUCCESSFUL;
+                }).onErrorResume(e -> {
+                    e.printStackTrace();
+                    return Mono.just(false);
                 });
-    }
-
-    @Override
-    public Mono<Boolean> healthCheck() {
-        return healthWebClient.get()
-                .uri("/actuator/health/readiness")
-                .retrieve()
-                .toBodilessEntity()
-                .timeout(Duration.ofSeconds(1))
-                .map(voidResponseEntity -> voidResponseEntity.getStatusCode().is2xxSuccessful())
-                .onErrorResume(throwable -> Mono.just(false));
     }
 }

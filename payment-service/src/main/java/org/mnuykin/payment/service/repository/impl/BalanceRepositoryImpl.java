@@ -1,5 +1,6 @@
 package org.mnuykin.payment.service.repository.impl;
 
+import org.mnuykin.payment.service.exception.InsufficientFunds;
 import org.mnuykin.payment.service.repository.BalanceRepository;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Mono;
@@ -18,9 +19,7 @@ public class BalanceRepositoryImpl implements BalanceRepository {
     }
 
     private BigDecimal ensureBalance(String accountId){
-        return accountBalance.containsKey(accountId)
-                ? accountBalance.get(accountId)
-                : accountBalance.put(accountId, initBalance);
+        return accountBalance.computeIfAbsent(accountId, s -> initBalance);
     }
 
     @Override
@@ -31,13 +30,13 @@ public class BalanceRepositoryImpl implements BalanceRepository {
     @Override
     public Mono<Void> executePayment(String accountId, BigDecimal amount) {
         return Mono.fromRunnable(() -> {
-            if (amount == null || amount.signum() <= 0) {
+            if (amount == null || amount.signum() < 0) {
                 throw new IllegalArgumentException("Amount must be positive");
             }
 
             BigDecimal balance = ensureBalance(accountId);
             if(balance.compareTo(amount) < 0){
-                throw new RuntimeException("Insufficient funds");
+                throw new InsufficientFunds("Insufficient funds");
             }
 
             accountBalance.put(accountId,  balance.subtract(amount));

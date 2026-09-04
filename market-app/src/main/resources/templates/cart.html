@@ -21,6 +21,14 @@
                 </div>
             </div>
         </div>
+        <div th:if="${isPaymentServiceNotAvailable}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <span>Сервис оплаты временно недоступен. Пожалуйста, попробуйте позже.</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <div th:if="${isUnsufficientFunds}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <span>Недостаточно средств. Пожалуйста, пополните счет.</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
         <div class="row p-2" th:each="item : ${items}">
             <div class="col">
                 <div class="card">
@@ -49,7 +57,7 @@
                 <form action="/buy" method="post" th:if="${!items.isEmpty()}">
                     <div class="hstack gap-3">
                         <h2 th:text="'Итого: '+${total}+' руб.'"/>
-                        <button class="btn btn-warning ms-auto">Купить</button>
+                        <button class="btn btn-warning ms-auto" th:disabled="${isPaymentServiceNotAvailable || isUnsufficientFunds}">Купить</button>
                     </div>
                 </form>
             </div>

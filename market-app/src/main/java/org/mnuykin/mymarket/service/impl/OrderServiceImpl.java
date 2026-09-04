@@ -2,6 +2,7 @@ package org.mnuykin.mymarket.service.impl;
 
 import org.mnuykin.mymarket.advice.exception.CartEmptyException;
 import org.mnuykin.mymarket.advice.exception.NotFoundException;
+import org.mnuykin.mymarket.advice.exception.PaymentException;
 import org.mnuykin.mymarket.entity.Item;
 import org.mnuykin.mymarket.entity.Order;
 import org.mnuykin.mymarket.entity.OrderItem;
@@ -86,41 +87,55 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional
     public Mono<OrderDto> create() {
+        return getCartItemData()
+                .flatMap(cartItems -> saveOrder(cartItems)
+                        .flatMap(saveOrder -> saveOrderData(saveOrder, cartItems))
+                        .flatMap(orderDto ->
+                                paymentService.pay(orderDto.getTotalSum())
+                                        .flatMap(isSuccessful -> isSuccessful
+                                                ? cartRepository.deleteAll().thenReturn(orderDto)
+                                                : Mono.error(new PaymentException("Payment error")))
+                        )
+                );
+    }
+
+    private Mono<List<CartItemData>> getCartItemData(){
         return cartRepository.findCartItemDataAll()
                 .switchIfEmpty(Mono.error(new CartEmptyException()))
+                .collectList();
+    }
+
+    private Mono<Order> saveOrder(List<CartItemData> cartItems){
+        return orderRepository.save(
+                new Order (
+                        null, cartItems.stream().mapToLong(
+                                item -> item.price() * item.count()).sum()
+                )
+        );
+    }
+
+    private Mono<OrderDto> saveOrderData(Order saveOrder, List<CartItemData> cartItems)
+    {
+        List<OrderItem> orderItems = new ArrayList<>();
+        for(CartItemData item : cartItems){
+            OrderItem orderItem = new OrderItem();
+            orderItem.setItemId(item.item());
+            orderItem.setOrderId(saveOrder.getId());
+            orderItem.setPrice(item.price());
+            orderItem.setQuantity(item.count());
+
+            orderItems.add(orderItem);
+        }
+        return orderItemRepository.saveAll(orderItems)
                 .collectList()
-                .flatMap(
-                        cartItems -> orderRepository.save(
-                                    new Order(null, cartItems.stream().mapToLong(
-                                    item -> item.price() * item.count()).sum())
-                                ).flatMap(
-                                        saveOrder -> {
-                                            List<OrderItem> orderItems = new ArrayList<>();
-                                            for(CartItemData item : cartItems){
-                                                OrderItem orderItem = new OrderItem();
-                                                orderItem.setItemId(item.item());
-                                                orderItem.setOrderId(saveOrder.getId());
-                                                orderItem.setPrice(item.price());
-                                                orderItem.setQuantity(item.count());
+                .flatMap(savedOrderItems -> {
+                    List<Long> itemIds = savedOrderItems.stream()
+                            .map(OrderItem::getItemId)
+                            .toList();
 
-                                                orderItems.add(orderItem);
-                                            }
-                                            return orderItemRepository.saveAll(orderItems)
-                                                    .collectList()
-                                                    .flatMap(savedOrderItems -> {
-                                                        List<Long> itemIds = savedOrderItems.stream()
-                                                                .map(OrderItem::getItemId)
-                                                                .toList();
-
-                                                        return itemRepository.findAllById(itemIds)
-                                                                .collectMap(Item::getId)
-                                                                .map(itemsMap -> orderMapper.toDto(saveOrder, savedOrderItems, itemsMap, orderItemMapper));
-                                                    })
-                                                    .flatMap(orderDto ->
-                                                            cartRepository.deleteAll().thenReturn(orderDto)
-                                                    );
-                                        }
-                                )
-                );
+                    return itemRepository.findAllById(itemIds)
+                            .collectMap(Item::getId)
+                            .map(itemsMap -> orderMapper.toDto(saveOrder, savedOrderItems, itemsMap, orderItemMapper));
+                });
     }
 }

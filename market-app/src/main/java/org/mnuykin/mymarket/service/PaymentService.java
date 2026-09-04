@@ -5,5 +5,4 @@ import reactor.core.publisher.Mono;
 public interface PaymentService {
     Mono<Long> getBalance();
     Mono<Boolean> pay(Long amount);
-    Mono<Boolean> healthCheck();
 }

@@ -2,6 +2,7 @@ package org.mnuykin.mymarket.controller;
 
 import org.mnuykin.mymarket.model.ItemAction;
 import org.mnuykin.mymarket.service.CartService;
+import org.mnuykin.mymarket.service.PaymentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -16,20 +17,26 @@ import reactor.core.publisher.Mono;
 public class CartController {
 
     final private CartService cartService;
+    final private PaymentService paymentService;
 
     @Autowired
-    public CartController(CartService cartService){
+    public CartController(CartService cartService, PaymentService paymentService){
         this.cartService = cartService;
+        this.paymentService = paymentService;
     }
 
     @GetMapping
     public Mono<String> getCart(Model model){
         return Mono.zip(
                 cartService.getItems().collectList(),
-                cartService.getTotal()
+                cartService.getTotal(),
+                paymentService.getBalance().onErrorResume(throwable -> Mono.just(Long.MIN_VALUE))
         ).doOnNext(tuple -> {
             model.addAttribute("items", tuple.getT1());
             model.addAttribute("total", tuple.getT2());
+            model.addAttribute("isPaymentServiceNotAvailable", tuple.getT3() == Long.MIN_VALUE);
+            model.addAttribute("isUnsufficientFunds", tuple.getT3() != Long.MIN_VALUE
+                    && tuple.getT3() < tuple.getT2());
         }).thenReturn("cart");
     }
 

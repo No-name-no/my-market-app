@@ -1,5 +1,6 @@
 package org.mnuykin.payment.service.service.impl;
 
+import org.mnuykin.payment.service.exception.InsufficientFunds;
 import org.mnuykin.server.domain.BalanceResponse;
 import org.mnuykin.server.domain.ExecuteRequest;
 import org.mnuykin.server.domain.ExecuteResponse;
@@ -26,7 +27,7 @@ public class PaymentServiceImpl implements PaymentService {
                                         .remainingBalance(balance)
                         )
                 )
-        ).onErrorResume(throwable -> throwable instanceof RuntimeException
+        ).onErrorResume(throwable -> throwable instanceof InsufficientFunds
                 ? Mono.just(new ExecuteResponse().status(ExecuteResponse.StatusEnum.INSUFFICIENT_FUNDS))
                 : Mono.just(new ExecuteResponse().status(ExecuteResponse.StatusEnum.REJECTED))
         );
@@ -35,7 +36,6 @@ public class PaymentServiceImpl implements PaymentService {
     @Override
     public Mono<BalanceResponse> getBalance(String accountId) {
         return balanceRepository.getBalance(accountId)
-                .switchIfEmpty(Mono.error(RuntimeException::new))
                 .map(bigDecimal -> new BalanceResponse().balance(bigDecimal));
     }
 }
