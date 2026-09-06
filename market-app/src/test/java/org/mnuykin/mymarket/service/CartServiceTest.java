@@ -13,7 +13,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.when;
 
 class CartServiceTest extends BaseServiceTest {
     @Autowired
@@ -24,7 +23,6 @@ class CartServiceTest extends BaseServiceTest {
 
     @Test
     void test(){
-        when(cacheService.get(any())).thenReturn(Mono.empty());
         doReturn(Mono.just(true)).when(cacheService).save(anyString(), anyList());
         doReturn(Mono.just(true)).when(cacheService).save(anyString(), any(Object.class));
 

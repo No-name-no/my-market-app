@@ -1,5 +1,11 @@
 # my-market-app
 Веб-приложение «Витрина интернет-магазина» с использованием Spring Boot на реактивном стеке технологий
+Приложение использует сервис платежей и redis в качестве кеша
+
+# Проекты
+1) market-app - основной проект «Витрина интернет-магазина»
+2) payment-openapi - схема API к сервису платежей для кода генерации клиентской и серверной части 
+3) payment-service - сервис платежей
 
 # Основные возможности
     Просмотр витрины товаров
@@ -25,8 +31,10 @@
 | POST | `/buy` | Создать новый заказ и перенаправить на его страницу | `redirect:/orders/{id}` |
 
 # Запуск приложения
+Redis
+docker run --name redis-server -it --rm -p 6379:6379 redis:7.4.2-bookworm sh -c "redis-server && sleep 7 && redis-cli"
 ## Maven
-`mvn clean package java -jar target/my-market-app.jar`
+`mvn clean package -DskipTests && java -jar market-app/target/market-app-*.jar & java -jar payment-service/target/payment-service-*.jar`
 
 ## Docker
 1) Выполнить - `mvn clean package`
