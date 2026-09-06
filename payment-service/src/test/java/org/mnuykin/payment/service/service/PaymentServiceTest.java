@@ -44,5 +44,11 @@ public class PaymentServiceTest {
         ).block();
         assertNotNull(rs);
         assertEquals(ExecuteResponse.StatusEnum.INSUFFICIENT_FUNDS, rs.getStatus());
+
+        rs = paymentService.executePayment(
+                testAccount, Mono.just(new ExecuteRequest().amount(BigDecimal.TEN.negate()))
+        ).block();
+        assertNotNull(rs);
+        assertEquals(ExecuteResponse.StatusEnum.REJECTED, rs.getStatus());
     }
 }
