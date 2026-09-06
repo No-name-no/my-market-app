@@ -41,7 +41,7 @@ public class ItemServiceImpl implements ItemService {
     @Override
     @Transactional(readOnly = true)
     public Mono<PageItemDto> findItems(String search, ItemsSort itemsSort, Integer pageNumber, Integer pageSize) {
-        String cacheKey = String.format("items:search=%s:itemsSort=%s:pageNumber=%d:pageSize=%d",
+        final String cacheKey = String.format("items:search=%s:itemsSort=%s:pageNumber=%d:pageSize=%d",
                 search, itemsSort.name(), pageNumber, pageSize
         );
 
@@ -56,32 +56,30 @@ public class ItemServiceImpl implements ItemService {
         Flux<Item> itemFlux = byTextSearch
                 ? itemRepository.findByDescriptionContainsIgnoreCaseOrTitleContainsIgnoreCase(search, search, pageable)
                 : itemRepository.findAllBy(pageable);
+        Mono<Long> countMono = byTextSearch
+                ? itemRepository.countByDescriptionContainsIgnoreCaseOrTitleContainsIgnoreCase(search, search)
+                : itemRepository.count();
 
-        Flux<ItemDto> itemDtoFlux = itemFlux
-                .flatMap(item ->
-                cartRepository.getCartItemByItemId(item.getId())
-                        .map(cartItem -> itemMapper.toDto(item, cartItem.getCount()))
-                        .switchIfEmpty(Mono.just(itemMapper.toDto(item, 0)))
-        );
-
-        return reactiveRedisTemplate.opsForValue().get(cacheKey).map(o -> (PageItemDto) o)
-                .switchIfEmpty(itemDtoFlux.collectList()
-                        .zipWith(
-                            byTextSearch
-                                    ? itemRepository.countByDescriptionContainsIgnoreCaseOrTitleContainsIgnoreCase(search, search)
-                                    : itemRepository.count()
-                        ).map(p -> new PageItemDto(
-                                p.getT1(),
-                                pageable.getPageSize(),
-                                pageable.getPageNumber(),
-                                pageable.hasPrevious(),
-                                pageable.getPageNumber() + 1 < p.getT2(),
-                                p.getT2())
-                        ).flatMap(itemDtos -> reactiveRedisTemplate.opsForValue()
-                                .set(cacheKey,  itemDtos, CacheConfig.CACHE_TTL)
-                                .thenReturn(itemDtos)
-                        )
-                );
+        return reactiveRedisTemplate.opsForList().range(cacheKey, 0, -1)
+                .cast(Item.class).flatMap(this::getItemDtoWithDataCard).collectList()
+                .filter(itemDtos -> !itemDtos.isEmpty())
+                .switchIfEmpty(
+                        itemFlux.collectList()
+                                .flatMap(list -> reactiveRedisTemplate.opsForList()
+                                    .rightPushAll(cacheKey, list.toArray())
+                                    .then(reactiveRedisTemplate.expire(cacheKey, CacheConfig.CACHE_TTL))
+                                    .thenReturn(list))
+                                .flatMapMany(Flux::fromIterable).flatMap(this::getItemDtoWithDataCard).collectList()
+                )
+                .zipWith(countMono)
+                .map(p -> new PageItemDto(
+                        p.getT1(),
+                        pageable.getPageSize(),
+                        pageable.getPageNumber(),
+                        pageable.hasPrevious(),
+                        pageable.getPageNumber() + 1 < p.getT2(),
+                        p.getT2()
+                ));
     }
 
     @Override
@@ -90,17 +88,24 @@ public class ItemServiceImpl implements ItemService {
         final String cacheKey = String.format("item:id=%d", id);
 
         return reactiveRedisTemplate.opsForValue().get(cacheKey)
-                .cast(ItemDto.class)
-                .switchIfEmpty(itemRepository.getItemById(id)
+                .cast(Item.class)
+                .flatMap(this::getItemDtoWithDataCard)
+                .switchIfEmpty(
+                        itemRepository.getItemById(id)
                         .switchIfEmpty(Mono.error(new NotFoundException(id)))
-                        .flatMap(item ->
-                                cartRepository.getCartItemByItemId(item.getId())
-                                        .map(cartItem -> itemMapper.toDto(item, cartItem.getCount()))
-                                        .switchIfEmpty(Mono.just(itemMapper.toDto(item, 0)))
-                                        .flatMap(itemDto -> reactiveRedisTemplate
-                                                .opsForValue()
-                                                .set(cacheKey, itemDto, CacheConfig.CACHE_TTL)
-                                                .thenReturn(itemDto))
-                        ));
+                        .flatMap(item -> reactiveRedisTemplate
+                                .opsForValue()
+                                .set(cacheKey, item, CacheConfig.CACHE_TTL)
+                                .doOnSuccess(aBoolean -> System.out.println(" Cached item id=" + id))
+                                .doOnError(aBoolean -> System.out.println(" Failed to cache item id=" + id))
+                                .thenReturn(item)
+                        ).flatMap(this::getItemDtoWithDataCard)
+                );
+    }
+
+    private Mono<ItemDto> getItemDtoWithDataCard(Item item){
+        return cartRepository.getCartItemByItemId(item.getId())
+                .map(cartItem -> itemMapper.toDto(item, cartItem.getCount()))
+                .switchIfEmpty(Mono.just(itemMapper.toDto(item, 0)));
     }
 }

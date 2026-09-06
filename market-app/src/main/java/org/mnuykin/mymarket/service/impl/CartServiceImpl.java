@@ -1,7 +1,9 @@
 package org.mnuykin.mymarket.service.impl;
 
 import org.mnuykin.mymarket.advice.exception.NotFoundException;
+import org.mnuykin.mymarket.config.CacheConfig;
 import org.mnuykin.mymarket.entity.CartItem;
+import org.mnuykin.mymarket.entity.Item;
 import org.mnuykin.mymarket.mapper.ItemMapper;
 import org.mnuykin.mymarket.model.ItemDto;
 import org.mnuykin.mymarket.model.ItemAction;
@@ -9,6 +11,7 @@ import org.mnuykin.mymarket.repository.CartRepository;
 import org.mnuykin.mymarket.repository.ItemRepository;
 import org.mnuykin.mymarket.service.CartService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
@@ -18,14 +21,17 @@ import reactor.core.publisher.Mono;
 public class CartServiceImpl implements CartService {
     final private ItemRepository itemRepository;
     final private CartRepository cartRepository;
+    final private ReactiveRedisTemplate<String, Object> reactiveRedisTemplate;
     final private ItemMapper itemMapper;
 
     @Autowired
     CartServiceImpl(ItemRepository itemRepository,
                     CartRepository cartRepository,
+                    ReactiveRedisTemplate<String, Object> reactiveRedisTemplate,
                     ItemMapper itemMapper){
         this.itemRepository = itemRepository;
         this.cartRepository = cartRepository;
+        this.reactiveRedisTemplate = reactiveRedisTemplate;
         this.itemMapper = itemMapper;
     }
 
@@ -53,9 +59,20 @@ public class CartServiceImpl implements CartService {
     @Override
     @Transactional(readOnly = true)
     public Flux<ItemDto> getItems(){
-        return cartRepository.findAll().flatMap(
-                cartItem -> itemRepository.getItemById(cartItem.getItemId())
-                        .map(item -> itemMapper.toDto(item, cartItem.getCount()))
+        return cartRepository.findAll().flatMap(cartItem -> {
+                    final String cacheKey = String.format("item:id=%d", cartItem.getItemId());
+                    return reactiveRedisTemplate.opsForValue().get(cacheKey).cast(Item.class)
+                            .map(item -> itemMapper.toDto(item, cartItem.getCount()))
+                            .switchIfEmpty(itemRepository.getItemById(cartItem.getItemId())
+                                    .flatMap(item -> reactiveRedisTemplate
+                                            .opsForValue()
+                                            .set(cacheKey, item, CacheConfig.CACHE_TTL)
+                                            .thenReturn(item)
+                                    )
+                                    .map(item -> itemMapper.toDto(item, cartItem.getCount()))
+                                    .switchIfEmpty(Mono.error(new NotFoundException(cartItem.getItemId())))
+                            );
+                }
         );
     }
 
