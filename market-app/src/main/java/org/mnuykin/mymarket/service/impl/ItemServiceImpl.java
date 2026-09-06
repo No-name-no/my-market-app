@@ -1,7 +1,6 @@
 package org.mnuykin.mymarket.service.impl;
 
 import org.mnuykin.mymarket.advice.exception.NotFoundException;
-import org.mnuykin.mymarket.config.CacheConfig;
 import org.mnuykin.mymarket.entity.Item;
 import org.mnuykin.mymarket.mapper.ItemMapper;
 import org.mnuykin.mymarket.model.ItemDto;
@@ -9,10 +8,10 @@ import org.mnuykin.mymarket.model.ItemsSort;
 import org.mnuykin.mymarket.model.PageItemDto;
 import org.mnuykin.mymarket.repository.CartRepository;
 import org.mnuykin.mymarket.repository.ItemRepository;
+import org.mnuykin.mymarket.service.CacheService;
 import org.mnuykin.mymarket.service.ItemService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
-import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -25,16 +24,16 @@ public class ItemServiceImpl implements ItemService {
     final private ItemRepository itemRepository;
     final private CartRepository cartRepository;
     final private ItemMapper itemMapper;
-    final private ReactiveRedisTemplate<String, Object> reactiveRedisTemplate;
+    final private CacheService cacheService;
 
     @Autowired
     ItemServiceImpl(ItemRepository itemRepository,
                     CartRepository cartRepository,
-                    ReactiveRedisTemplate<String, Object> reactiveRedisTemplate,
+                    CacheService cacheService,
                     ItemMapper itemMapper){
         this.itemRepository = itemRepository;
         this.cartRepository = cartRepository;
-        this.reactiveRedisTemplate = reactiveRedisTemplate;
+        this.cacheService = cacheService;
         this.itemMapper = itemMapper;
     }
 
@@ -60,15 +59,12 @@ public class ItemServiceImpl implements ItemService {
                 ? itemRepository.countByDescriptionContainsIgnoreCaseOrTitleContainsIgnoreCase(search, search)
                 : itemRepository.count();
 
-        return reactiveRedisTemplate.opsForList().range(cacheKey, 0, -1)
+        return cacheService.getObjs(cacheKey)
                 .cast(Item.class).flatMap(this::getItemDtoWithDataCard).collectList()
                 .filter(itemDtos -> !itemDtos.isEmpty())
                 .switchIfEmpty(
                         itemFlux.collectList()
-                                .flatMap(list -> reactiveRedisTemplate.opsForList()
-                                    .rightPushAll(cacheKey, list.toArray())
-                                    .then(reactiveRedisTemplate.expire(cacheKey, CacheConfig.CACHE_TTL))
-                                    .thenReturn(list))
+                                .flatMap(list -> cacheService.save(cacheKey, list).thenReturn(list))
                                 .flatMapMany(Flux::fromIterable).flatMap(this::getItemDtoWithDataCard).collectList()
                 )
                 .zipWith(countMono)
@@ -87,17 +83,13 @@ public class ItemServiceImpl implements ItemService {
     public Mono<ItemDto> getItemById(Long id) {
         final String cacheKey = String.format("item:id=%d", id);
 
-        return reactiveRedisTemplate.opsForValue().get(cacheKey)
+        return cacheService.get(cacheKey)
                 .cast(Item.class)
                 .flatMap(this::getItemDtoWithDataCard)
                 .switchIfEmpty(
                         itemRepository.getItemById(id)
                         .switchIfEmpty(Mono.error(new NotFoundException(id)))
-                        .flatMap(item -> reactiveRedisTemplate
-                                .opsForValue()
-                                .set(cacheKey, item, CacheConfig.CACHE_TTL)
-                                .doOnSuccess(aBoolean -> System.out.println(" Cached item id=" + id))
-                                .doOnError(aBoolean -> System.out.println(" Failed to cache item id=" + id))
+                        .flatMap(item -> cacheService.save(cacheKey, item)
                                 .thenReturn(item)
                         ).flatMap(this::getItemDtoWithDataCard)
                 );

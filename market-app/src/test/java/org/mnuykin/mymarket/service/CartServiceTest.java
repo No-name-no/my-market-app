@@ -5,18 +5,29 @@ import org.mnuykin.mymarket.model.ItemAction;
 import org.mnuykin.mymarket.model.ItemDto;
 import org.mnuykin.mymarket.service.impl.CartServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.when;
 
 class CartServiceTest extends BaseServiceTest {
     @Autowired
     private CartServiceImpl cartService;
 
+    @Autowired
+    private CacheService cacheService;
+
     @Test
     void test(){
+        when(cacheService.get(any())).thenReturn(Mono.empty());
+        doReturn(Mono.just(true)).when(cacheService).save(anyString(), anyList());
+        doReturn(Mono.just(true)).when(cacheService).save(anyString(), any(Object.class));
+
         assertEquals(0L, cartService.getTotal().block());
 
         List<ItemDto> itemDtoList = cartService.getItems().collectList().block();

@@ -5,8 +5,10 @@ import org.junit.jupiter.api.Test;
 import org.mnuykin.mymarket.model.ItemAction;
 import org.mnuykin.mymarket.model.ItemDto;
 import org.mnuykin.mymarket.service.CartService;
+import org.mnuykin.mymarket.service.PaymentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.web.reactive.function.BodyInserters;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -17,6 +19,9 @@ class CartControllerTest extends BaseControllerTest {
     @Autowired
     private CartService cartService;
 
+    @Autowired
+    private PaymentService paymentService;
+
     @Test
     void getCart_shouldReturnCartViewWithItemsAndTotal() {
         when(cartService.getItems()).thenReturn(Flux.just(
@@ -24,6 +29,7 @@ class CartControllerTest extends BaseControllerTest {
                 new ItemDto(2L, "Product B", "Desc B", "img2.jpg", 200L, 1))
         );
         when(cartService.getTotal()).thenReturn(Mono.just(99L));
+        when(paymentService.getBalance()).thenReturn(Mono.just(99L));
 
         webTestClient.get()
                 .uri("/cart/items")
@@ -53,11 +59,8 @@ class CartControllerTest extends BaseControllerTest {
         when(cartService.executeAction(id, action)).thenReturn(Mono.empty());
 
         webTestClient.post()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/cart/items")
-                        .queryParam("id", id.toString())
-                        .queryParam("action", action.name())
-                        .build())
+                .uri("/cart/items")
+                .body(BodyInserters.fromFormData("id", id.toString()).with("action", action.name()))
                 .exchange()
                 .expectStatus().is3xxRedirection()
                 .expectHeader().location("/cart/items");

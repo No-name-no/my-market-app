@@ -5,10 +5,9 @@ import org.junit.jupiter.api.Test;
 import org.mnuykin.mymarket.model.ItemAction;
 import org.mnuykin.mymarket.model.ItemDto;
 import org.mnuykin.mymarket.model.ItemsSort;
+import org.mnuykin.mymarket.model.PageItemDto;
 import org.mnuykin.mymarket.service.CartService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.BodyInserters;
@@ -34,7 +33,8 @@ class ItemControllerTest extends BaseControllerTest {
                 new ItemDto(3L, "Product3", "Desc3", "img3.jpg", 300L, 5),
                 new ItemDto(4L, "Product4", "Desc4", "img4.jpg", 400L, 3)
         );
-        Page<ItemDto> page = new PageImpl<>(items);
+        PageItemDto page = new PageItemDto();
+        page.setContent(items);
         when(itemService.findItems(null, ItemsSort.NO, 0, 5)).thenReturn(Mono.just(page));
 
         webTestClient.get().uri("/items")
@@ -60,7 +60,8 @@ class ItemControllerTest extends BaseControllerTest {
         List<ItemDto> items = List.of(
                 new ItemDto(10L, "Product10", "Desc10", "img10.jpg", 500L, 1)
         );
-        Page<ItemDto> page = new PageImpl<>(items);
+        PageItemDto page = new PageItemDto();
+        page.setContent(items);
         when(itemService.findItems(search, sort, pageNumber-1, pageSize)).thenReturn(Mono.just(page));
 
         webTestClient.get()

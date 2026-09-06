@@ -6,9 +6,7 @@ import org.mnuykin.client.domain.ExecuteResponse;
 import org.mnuykin.mymarket.advice.exception.PaymentServiceUnavailableException;
 import org.mnuykin.mymarket.service.PaymentService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 import reactor.util.retry.Retry;
 
@@ -22,9 +20,7 @@ public class PaymentServiceImpl implements PaymentService {
     private final PaymentApi paymentApi;
 
     @Autowired
-    PaymentServiceImpl(PaymentApi paymentApi,
-                       WebClient.Builder webClientBuilder,
-                       @Value("${payment.service.url}") String serviceUrl){
+    PaymentServiceImpl(PaymentApi paymentApi){
         this.paymentApi = paymentApi;
     }
 
