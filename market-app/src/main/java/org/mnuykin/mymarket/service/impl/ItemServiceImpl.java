@@ -1,6 +1,7 @@
 package org.mnuykin.mymarket.service.impl;
 
 import org.mnuykin.mymarket.advice.exception.NotFoundException;
+import org.mnuykin.mymarket.config.security.SecurityContextHolder;
 import org.mnuykin.mymarket.entity.Item;
 import org.mnuykin.mymarket.mapper.ItemMapper;
 import org.mnuykin.mymarket.model.ItemDto;
@@ -8,6 +9,7 @@ import org.mnuykin.mymarket.model.ItemsSort;
 import org.mnuykin.mymarket.model.PageItemDto;
 import org.mnuykin.mymarket.repository.CartRepository;
 import org.mnuykin.mymarket.repository.ItemRepository;
+import org.mnuykin.mymarket.repository.UserRepository;
 import org.mnuykin.mymarket.service.CacheService;
 import org.mnuykin.mymarket.service.ItemService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,16 +25,19 @@ public class ItemServiceImpl implements ItemService {
 
     final private ItemRepository itemRepository;
     final private CartRepository cartRepository;
+    final private UserRepository userRepository;
     final private ItemMapper itemMapper;
     final private CacheService cacheService;
 
     @Autowired
     ItemServiceImpl(ItemRepository itemRepository,
                     CartRepository cartRepository,
+                    UserRepository userRepository,
                     CacheService cacheService,
                     ItemMapper itemMapper){
         this.itemRepository = itemRepository;
         this.cartRepository = cartRepository;
+        this.userRepository = userRepository;
         this.cacheService = cacheService;
         this.itemMapper = itemMapper;
     }
@@ -96,8 +101,18 @@ public class ItemServiceImpl implements ItemService {
     }
 
     private Mono<ItemDto> getItemDtoWithDataCard(Item item){
-        return cartRepository.getCartItemByItemId(item.getId())
-                .map(cartItem -> itemMapper.toDto(item, cartItem.getCount()))
-                .switchIfEmpty(Mono.just(itemMapper.toDto(item, 0)));
+        return SecurityContextHolder.isAuthenticated().map(isAuth -> {
+            if(isAuth){
+                SecurityContextHolder.getCurrentUsername()
+                        .flatMap(userRepository::getUsersByLogin)
+                        .flatMap(user -> cartRepository
+                                .getCartItemByItemIdAndUserId(item.getId(), user.getId())
+                                .map(cartItem -> itemMapper.toDto(item, cartItem.getCount()))
+                                .switchIfEmpty(Mono.just(itemMapper.toDto(item, 0)))
+                        );
+            }
+
+            return itemMapper.toDto(item, 0);
+        });
     }
 }

@@ -7,4 +7,5 @@ import reactor.core.publisher.Mono;
 
 public interface OrderRepository extends ReactiveCrudRepository<Order, Long> {
     Mono<Order> getOrderById(Long id);
+    Mono<Order> getOrderByIdAndUserId(Long id, Long userId);
 }

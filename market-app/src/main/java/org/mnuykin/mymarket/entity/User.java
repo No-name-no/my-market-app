@@ -12,15 +12,15 @@ import org.springframework.data.relational.core.mapping.Table;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "orders")
-public class Order {
+@Table(name = "users")
+public class User {
     @Id
     @Column("id")
     private Long id;
 
-    @Column("user_id")
-    private Long userId;
+    @Column("login")
+    private String login;
 
-    @Column("total_sum")
-    private Long totalSum;
+    @Column("password")
+    private String password;
 }

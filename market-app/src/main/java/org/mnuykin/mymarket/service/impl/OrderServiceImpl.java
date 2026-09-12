@@ -9,10 +9,7 @@ import org.mnuykin.mymarket.entity.OrderItem;
 import org.mnuykin.mymarket.mapper.OrderItemMapper;
 import org.mnuykin.mymarket.mapper.OrderMapper;
 import org.mnuykin.mymarket.model.OrderDto;
-import org.mnuykin.mymarket.repository.CartRepository;
-import org.mnuykin.mymarket.repository.ItemRepository;
-import org.mnuykin.mymarket.repository.OrderItemRepository;
-import org.mnuykin.mymarket.repository.OrderRepository;
+import org.mnuykin.mymarket.repository.*;
 import org.mnuykin.mymarket.repository.dto.CartItemData;
 import org.mnuykin.mymarket.service.OrderService;
 import org.mnuykin.mymarket.service.PaymentService;
@@ -31,6 +28,7 @@ public class OrderServiceImpl implements OrderService {
     final private CartRepository cartRepository;
     final private OrderItemRepository orderItemRepository;
     final private ItemRepository itemRepository;
+    final private UserRepository userRepository;
     final private PaymentService paymentService;
 
     final private OrderMapper orderMapper;
@@ -39,12 +37,13 @@ public class OrderServiceImpl implements OrderService {
     @Autowired
     OrderServiceImpl(OrderRepository orderRepository, CartRepository cartRepository,
                      OrderItemRepository orderItemRepository, ItemRepository itemRepository,
-                     PaymentService paymentService,
+                     UserRepository userRepository, PaymentService paymentService,
                      OrderMapper orderMapper, OrderItemMapper orderItemMapper){
         this.orderRepository = orderRepository;
         this.cartRepository = cartRepository;
         this.itemRepository = itemRepository;
         this.orderItemRepository = orderItemRepository;
+        this.userRepository = userRepository;
         this.orderMapper = orderMapper;
         this.orderItemMapper = orderItemMapper;
         this.paymentService = paymentService;

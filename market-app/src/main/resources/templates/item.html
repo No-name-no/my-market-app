@@ -1,5 +1,7 @@
 <!DOCTYPE html>
-<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<html lang="ru"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 
 <head>
     <meta charset="utf-8">
@@ -19,6 +21,19 @@
                     <a href="/orders" class="btn btn-secondary ms-auto bi bi-file-earmark-text"> Заказы</a>
                     <a href="/cart/items" class="btn btn-secondary bi bi-cart4"> Корзина</a>
                     <a href="/items" class="btn btn-secondary bi bi-arrow-left-square"> Главная</a>
+                    <!-- ====== Блок аутентификации ====== -->
+                    <a sec:authorize="!isAuthenticated()"
+                       th:href="@{/login}"
+                       class="btn btn-success bi bi-box-arrow-in-right"> Войти</a>
+
+                    <!-- Если пользователь аутентифицирован -->
+                    <div sec:authorize="isAuthenticated()" class="d-flex align-items-center gap-2">
+                        <form th:action="@{/logout}" method="post" class="m-0">
+                            <button type="submit" class="btn btn-outline-danger bi bi-box-arrow-right">
+                                Выйти
+                            </button>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
