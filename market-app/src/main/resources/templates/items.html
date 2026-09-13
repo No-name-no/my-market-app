@@ -23,12 +23,12 @@
                 <a href="/orders" class="btn btn-secondary ms-auto bi bi-file-earmark-text"> Заказы</a>
                 <a href="/cart/items" class="btn btn-secondary bi bi-cart4"> Корзина</a>
                 <!-- ====== Блок аутентификации ====== -->
-                <a sec:authorize="!isAuthenticated()"
+                <a th:if="!${isAuthenticated}"
                    th:href="@{/login}"
                    class="btn btn-success bi bi-box-arrow-in-right"> Войти</a>
 
                 <!-- Если пользователь аутентифицирован -->
-                <div sec:authorize="isAuthenticated()" class="d-flex align-items-center gap-2">
+                <div th:if="${isAuthenticated}" class="d-flex align-items-center gap-2">
                     <form th:action="@{/logout}" method="post" class="m-0">
                         <button type="submit" class="btn btn-outline-danger bi bi-box-arrow-right">
                             Выйти
@@ -74,7 +74,7 @@
         <div class="col" th:each="item : ${itemsRow}">
             <div class="card" th:if="${item.id != -1}">
                 <a th:href="${'/items/'+item.id}">
-                    <img th:src="${'/'+item.imgPath}" class="card-img-top" alt="Нет изображения">
+                    <img th:src="${'/img/'+item.imgPath}" class="card-img-top" alt="Нет изображения">
                 </a>
                 <div class="card-body">
                     <h5 class="card-title" th:text="${item.title}"></h5>

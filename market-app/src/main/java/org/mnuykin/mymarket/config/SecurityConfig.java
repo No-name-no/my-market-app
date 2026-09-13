@@ -29,7 +29,7 @@ public class SecurityConfig {
         return http
                 .authorizeExchange(exchange -> exchange
                         .pathMatchers("/login", "/logout").permitAll()
-                        .pathMatchers(GET, "/", "/items", "/items/**").permitAll()
+                        .pathMatchers(GET, "/", "/img/**", "/items", "/items/**").permitAll()
                         .pathMatchers(POST, "/items", "/items/**").authenticated()
                         .pathMatchers("/cart/**", "/orders/**", "/buy").authenticated()
                         .anyExchange().authenticated()

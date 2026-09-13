@@ -2,6 +2,7 @@ package org.mnuykin.mymarket.controller;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import org.mnuykin.mymarket.config.security.SecurityContextHolder;
 import org.mnuykin.mymarket.model.ItemDto;
 import org.mnuykin.mymarket.model.ItemAction;
 import org.mnuykin.mymarket.model.ItemsSort;
@@ -9,6 +10,7 @@ import org.mnuykin.mymarket.model.PagingDto;
 import org.mnuykin.mymarket.service.CartService;
 import org.mnuykin.mymarket.service.ItemService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.annotation.Validated;
@@ -53,6 +55,7 @@ public class ItemController {
                                     itemPage.isHasPrevious(),
                                     itemPage.isHasNex()
                             ));
+                            model.addAttribute("isAuthenticated", SecurityContextHolder.isAuthenticated().block());
                         }
                 ).thenReturn("items");
     }

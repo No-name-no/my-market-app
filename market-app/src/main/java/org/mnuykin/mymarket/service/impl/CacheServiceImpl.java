@@ -26,11 +26,17 @@ public class CacheServiceImpl implements CacheService {
 
     @Override
     public Mono<Boolean> save(String key, Object object) {
+        if (object == null)
+            return Mono.just(false);
+
         return reactiveRedisTemplate.opsForValue().set(key, object, CacheConfig.CACHE_TTL);
     }
 
     @Override
     public Mono<Boolean> save(String key, List<?> object) {
+        if (object == null || object.isEmpty())
+            return Mono.just(false);
+
         return reactiveRedisTemplate.opsForList()
                 .rightPushAll(key, object.toArray())
                 .then(reactiveRedisTemplate.expire(key, CacheConfig.CACHE_TTL));

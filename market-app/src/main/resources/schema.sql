@@ -50,12 +50,12 @@ ALTER TABLE IF EXISTS users
 ALTER TABLE IF EXISTS orders
     ADD CONSTRAINT FK_orders_user_id
     FOREIGN KEY (user_id)
-    REFERENCES orders;
+    REFERENCES users (id);
 
 ALTER TABLE IF EXISTS cart_items
     ADD CONSTRAINT FK_cart_items_user_id
     FOREIGN KEY (user_id)
-    REFERENCES cart_items;
+    REFERENCES users (id);
 
 ALTER TABLE IF EXISTS cart_items
     ADD CONSTRAINT FK_cart_items_item
