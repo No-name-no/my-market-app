@@ -37,7 +37,6 @@ public class SecurityConfig {
                         .loginPage("/login")
                         .authenticationSuccessHandler(new RedirectServerAuthenticationSuccessHandler("/"))
                 )
-                .anonymous()
                 .logout(logout -> logout
                         .logoutUrl("/logout")
                         .logoutSuccessHandler((exchange, authentication) ->

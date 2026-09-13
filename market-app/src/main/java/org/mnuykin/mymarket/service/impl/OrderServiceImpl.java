@@ -3,9 +3,11 @@ package org.mnuykin.mymarket.service.impl;
 import org.mnuykin.mymarket.advice.exception.CartEmptyException;
 import org.mnuykin.mymarket.advice.exception.NotFoundException;
 import org.mnuykin.mymarket.advice.exception.PaymentException;
+import org.mnuykin.mymarket.config.security.SecurityContextHolder;
 import org.mnuykin.mymarket.entity.Item;
 import org.mnuykin.mymarket.entity.Order;
 import org.mnuykin.mymarket.entity.OrderItem;
+import org.mnuykin.mymarket.entity.User;
 import org.mnuykin.mymarket.mapper.OrderItemMapper;
 import org.mnuykin.mymarket.mapper.OrderMapper;
 import org.mnuykin.mymarket.model.OrderDto;
@@ -52,7 +54,13 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional(readOnly = true)
     public Flux<OrderDto> getOrder() {
-        return orderRepository.findAll()
+        return SecurityContextHolder.getCurrentUsername()
+                .flatMap(userRepository::getUsersByLogin)
+                .flatMapMany(this::getUserOrder);
+    }
+
+    private Flux<OrderDto> getUserOrder(User user){
+        return orderRepository.findAllByUserId(user.getId())
                 .flatMap(order ->
                         orderItemRepository.findAllByOrderId(order.getId())
                                 .collectList()
@@ -60,7 +68,9 @@ public class OrderServiceImpl implements OrderService {
                                     List<Long> itemIds = orderItems.stream().map(OrderItem::getItemId).toList();
                                     return itemRepository.findAllById(itemIds)
                                             .collectMap(Item::getId)
-                                            .map(items -> orderMapper.toDto(order, orderItems, items, orderItemMapper));
+                                            .map(items ->
+                                                    orderMapper.toDto(order, orderItems, items, orderItemMapper)
+                                            );
                                 })
                 );
     }
@@ -68,46 +78,57 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional(readOnly = true)
     public Mono<OrderDto> getOrderById(Long id) {
-        return orderRepository.getOrderById(id)
+        return SecurityContextHolder.getCurrentUsername()
+                .flatMap(userRepository::getUsersByLogin)
+                .flatMap(user -> getOrderByIdAndUser(id, user));
+    }
+
+    private Mono<OrderDto> getOrderByIdAndUser (Long id, User user){
+        return orderRepository.getOrderByIdAndUserId(id, user.getId())
                 .switchIfEmpty(Mono.error(new NotFoundException(id)))
                 .flatMap(order ->
                         orderItemRepository.findAllByOrderId(order.getId())
-                        .collectList()
-                        .flatMap(orderItems -> {
-                            List<Long> itemIds = orderItems.stream().map(OrderItem::getItemId).toList();
-                            return itemRepository.findAllById(itemIds)
-                                    .collectMap(Item::getId)
-                                    .map(items -> orderMapper.toDto(order, orderItems, items, orderItemMapper));
-                        })
+                                .collectList()
+                                .flatMap(orderItems -> {
+                                    List<Long> itemIds = orderItems.stream().map(OrderItem::getItemId).toList();
+                                    return itemRepository.findAllById(itemIds)
+                                            .collectMap(Item::getId)
+                                            .map(items ->
+                                                    orderMapper.toDto(order, orderItems, items, orderItemMapper)
+                                            );
+                                })
                 );
     }
 
     @Override
     @Transactional
     public Mono<OrderDto> create() {
-        return getCartItemData()
-                .flatMap(cartItems -> saveOrder(cartItems)
-                        .flatMap(saveOrder -> saveOrderData(saveOrder, cartItems))
-                        .flatMap(orderDto ->
-                                paymentService.pay(orderDto.getTotalSum())
-                                        .flatMap(isSuccessful -> isSuccessful
-                                                ? cartRepository.deleteAll().thenReturn(orderDto)
-                                                : Mono.error(new PaymentException("Payment error")))
-                        )
+        return  SecurityContextHolder.getCurrentUsername()
+                .flatMap(userRepository::getUsersByLogin)
+                .flatMap(user -> getCartItemData(user)
+                        .flatMap(cartItems -> saveOrder(cartItems, user)
+                               .flatMap(saveOrder -> saveOrderData(saveOrder, cartItems))
+                               .flatMap(orderDto ->
+                                       paymentService.pay(orderDto.getTotalSum())
+                                               .flatMap(isSuccessful -> isSuccessful
+                                                       ? cartRepository.deleteAll().thenReturn(orderDto)
+                                                       : Mono.error(new PaymentException("Payment error")))
+                               )
+                       )
                 );
     }
 
-    private Mono<List<CartItemData>> getCartItemData(){
-        return cartRepository.findCartItemDataAll()
+    private Mono<List<CartItemData>> getCartItemData(User user){
+        return cartRepository.findCartItemDataAll(user.getId())
                 .switchIfEmpty(Mono.error(new CartEmptyException()))
                 .collectList();
     }
 
-    private Mono<Order> saveOrder(List<CartItemData> cartItems){
+    private Mono<Order> saveOrder(List<CartItemData> cartItems, User user){
         return orderRepository.save(
-                new Order (
-                        null, cartItems.stream().mapToLong(
-                                item -> item.price() * item.count()).sum()
+                new Order (null,
+                        user.getId(),
+                        cartItems.stream().mapToLong(item -> item.price() * item.count()).sum()
                 )
         );
     }
@@ -133,7 +154,9 @@ public class OrderServiceImpl implements OrderService {
 
                     return itemRepository.findAllById(itemIds)
                             .collectMap(Item::getId)
-                            .map(itemsMap -> orderMapper.toDto(saveOrder, savedOrderItems, itemsMap, orderItemMapper));
+                            .map(itemsMap ->
+                                    orderMapper.toDto(saveOrder, savedOrderItems, itemsMap, orderItemMapper)
+                            );
                 });
     }
 }
