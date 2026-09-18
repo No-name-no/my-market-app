@@ -1,5 +1,7 @@
 package org.mnuykin.mymarket.controller;
 
+import org.mnuykin.mymarket.config.security.SecurityContextHolder;
+import org.mnuykin.mymarket.model.OrderDto;
 import org.mnuykin.mymarket.service.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -12,6 +14,8 @@ import org.springframework.web.reactive.result.view.Rendering;
 import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
+
 @Controller
 public class OrderController {
     final private OrderService orderService;
@@ -22,23 +26,32 @@ public class OrderController {
     }
 
     @GetMapping("/orders")
-    public Mono<String> getOrders (Model model){
-        return orderService.getOrder()
-                .collectList()
-                .doOnNext(
-                        orderDtos -> model.addAttribute("orders", orderDtos))
+    public Mono<String> getOrders(Model model) {
+        Mono<List<OrderDto>> ordersMono = orderService.getOrder().collectList();
+        Mono<Boolean> authMono = SecurityContextHolder.isAuthenticated();
+
+        return Mono.zip(ordersMono, authMono)
+                .doOnNext(tuple -> {
+                    model.addAttribute("orders", tuple.getT1());
+                    model.addAttribute("isAuthenticated", tuple.getT2());
+                })
                 .thenReturn("orders");
     }
 
     @GetMapping("/orders/{id}")
     public Mono<String> getOrder(@PathVariable Long id,
-                    @RequestParam(defaultValue = "false") boolean newOrder,
-                    Model model) {
-        return orderService.getOrderById(id)
-                .doOnNext(orderDto -> {
-                    model.addAttribute("order", orderDto);
+                                 @RequestParam(defaultValue = "false") boolean newOrder,
+                                 Model model) {
+        Mono<OrderDto> orderMono = orderService.getOrderById(id);
+        Mono<Boolean> authMono = SecurityContextHolder.isAuthenticated();
+
+        return Mono.zip(orderMono, authMono)
+                .doOnNext(tuple -> {
+                    model.addAttribute("order", tuple.getT1());
                     model.addAttribute("newOrder", newOrder);
-                }).thenReturn("order");
+                    model.addAttribute("isAuthenticated", tuple.getT2());
+                })
+                .thenReturn("order");
     }
 
     @PostMapping("/buy")

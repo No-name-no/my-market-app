@@ -101,9 +101,9 @@ public class ItemServiceImpl implements ItemService {
     }
 
     private Mono<ItemDto> getItemDtoWithDataCard(Item item){
-        return SecurityContextHolder.isAuthenticated().map(isAuth -> {
+        return SecurityContextHolder.isAuthenticated().flatMap(isAuth -> {
             if(isAuth){
-                SecurityContextHolder.getCurrentUsername()
+                return SecurityContextHolder.getCurrentUsername()
                         .flatMap(userRepository::getUsersByLogin)
                         .flatMap(user -> cartRepository
                                 .getCartItemByItemIdAndUserId(item.getId(), user.getId())
@@ -112,7 +112,7 @@ public class ItemServiceImpl implements ItemService {
                         );
             }
 
-            return itemMapper.toDto(item, 0);
+            return Mono.just(itemMapper.toDto(item, 0));
         });
     }
 }
