@@ -4,6 +4,12 @@ import org.mnuykin.client.api.PaymentApi;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.oauth2.client.ReactiveOAuth2AuthorizedClientManager;
+import org.springframework.security.oauth2.client.ReactiveOAuth2AuthorizedClientProviderBuilder;
+import org.springframework.security.oauth2.client.registration.ReactiveClientRegistrationRepository;
+import org.springframework.security.oauth2.client.web.DefaultReactiveOAuth2AuthorizedClientManager;
+import org.springframework.security.oauth2.client.web.reactive.function.client.ServerOAuth2AuthorizedClientExchangeFilterFunction;
+import org.springframework.security.oauth2.client.web.server.ServerOAuth2AuthorizedClientRepository;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.support.WebClientAdapter;
 import org.springframework.web.service.invoker.HttpServiceProxyFactory;
@@ -19,8 +25,29 @@ public class PaymentClientConfig {
     }
 
     @Bean
-    public PaymentApi paymentApi(WebClient.Builder builder) {
-        WebClient client = builder.baseUrl(serviceUrl).build();
+    public ReactiveOAuth2AuthorizedClientManager authorizedClientManager(
+            ReactiveClientRegistrationRepository clientRegistrations,
+            ServerOAuth2AuthorizedClientRepository authorizedClients) {
+        var authorizedClientProvider = ReactiveOAuth2AuthorizedClientProviderBuilder.builder()
+                .clientCredentials()
+                .build();
+        var authorizedClientManager = new DefaultReactiveOAuth2AuthorizedClientManager(
+                clientRegistrations, authorizedClients);
+        authorizedClientManager.setAuthorizedClientProvider(authorizedClientProvider);
+        return authorizedClientManager;
+    }
+
+    @Bean
+    public PaymentApi paymentApi(WebClient.Builder builder,
+                                 ReactiveOAuth2AuthorizedClientManager authorizedClientManager) {
+        var oauth2Client = new ServerOAuth2AuthorizedClientExchangeFilterFunction(authorizedClientManager);
+        oauth2Client.setDefaultClientRegistrationId("keycloak");
+
+        WebClient client = builder.baseUrl(serviceUrl)
+                .filter(oauth2Client)
+                .codecs(configurer -> configurer
+                        .defaultCodecs().maxInMemorySize(1024 * 1024)
+                ).build();
         WebClientAdapter adapter = WebClientAdapter.create(client);
         HttpServiceProxyFactory factory = HttpServiceProxyFactory.builderFor(adapter).build();
         return factory.createClient(PaymentApi.class);

@@ -1,6 +1,11 @@
 # my-market-app
 Веб-приложение «Витрина интернет-магазина» с использованием Spring Boot на реактивном стеке технологий
-Приложение использует сервис платежей и redis в качестве кеша
+Приложение использует сервис платежей и redis в качестве кеша, а так же Spring Security в качестве модуля авторизации
+Пользователи магазина могут авторизоваться в приложении по логину/паролю и разлогиниться
+Авторизация между сервисами осуществляется по OAuth2 в соответствии с Client Credentials Flow
+Сервера авторизации - Keycloack
+
+Пользователь интернет магазина по умолчанию: логин=test, пароль=test.
 
 # Проекты
 1) market-app - основной проект «Витрина интернет-магазина»
@@ -33,6 +38,8 @@
 # Запуск приложения
 Redis
 docker run --name redis-server -it --rm -p 6379:6379 redis:7.4.2-bookworm sh -c "redis-server && sleep 7 && redis-cli"
+Keycloack
+docker run -d -p 8085:8080 --name keycloak -e KC_BOOTSTRAP_ADMIN_USERNAME=admin -e KC_BOOTSTRAP_ADMIN_PASSWORD=admin quay.io/keycloak/keycloak:26.1.3 start-dev
 ## Maven
 `mvn clean package -DskipTests && java -jar market-app/target/market-app-*.jar & java -jar payment-service/target/payment-service-*.jar`
 

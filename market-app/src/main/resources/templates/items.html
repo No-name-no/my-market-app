@@ -25,7 +25,7 @@
                 <!-- ====== Блок аутентификации ====== -->
                 <a th:if="!${isAuthenticated}"
                    th:href="@{/login}"
-                   class="btn btn-success bi bi-box-arrow-in-right"> Войти</a>
+                   class="btn ms-auto btn-success bi bi-box-arrow-in-right"> Войти</a>
 
                 <!-- Если пользователь аутентифицирован -->
                 <div th:if="${isAuthenticated}" class="d-flex align-items-center gap-2">
