@@ -9,6 +9,7 @@ import org.mnuykin.mymarket.model.PageItemDto;
 import org.mnuykin.mymarket.service.CartService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.BodyInserters;
 import reactor.core.publisher.Mono;
@@ -86,6 +87,7 @@ class ItemControllerTest extends BaseControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "test")
     void postItems_shouldExecuteActionAndRedirectWithAllParameters() {
         Long id = 1L;
         String search = "test";
@@ -116,6 +118,28 @@ class ItemControllerTest extends BaseControllerTest {
     }
 
     @Test
+    void postItems_anonymous_shouldRedirectLogin() {
+        long id = 1L;
+        String search = "test";
+        ItemsSort sort = ItemsSort.PRICE;
+        int pageNumber = 3;
+        int pageSize = 7;
+        ItemAction action = ItemAction.PLUS;
+
+        webTestClient.post()
+                .uri("/items")
+                .body(BodyInserters.fromFormData("id", Long.toString(id))
+                        .with("search", search)
+                        .with("sort", sort.name())
+                        .with("pageNumber", String.valueOf(pageNumber))
+                        .with("pageSize", String.valueOf(pageSize))
+                        .with("action", action.name()))
+                .exchange()
+                .expectStatus().is3xxRedirection()
+                .expectHeader().location("/login");
+    }
+
+    @Test
     void getItemById_shouldReturnItemView() {
         Long id = 5L;
         ItemDto item = new ItemDto(id, "Special", "Desc", "img.jpg", 999L, 1);
@@ -137,6 +161,7 @@ class ItemControllerTest extends BaseControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "test")
     void postItemById_shouldExecuteActionAndReturnItemViewWithUpdatedItem() {
         Long id = 7L;
         ItemAction action = ItemAction.DELETE;
@@ -153,5 +178,18 @@ class ItemControllerTest extends BaseControllerTest {
 
         verify(cartService, times(1)).executeAction(id, action);
         verifyNoMoreInteractions(cartService, itemService);
+    }
+
+    @Test
+    void postItemById_anonymous_shouldRedirectLogin() {
+        Long id = 7L;
+        ItemAction action = ItemAction.DELETE;
+
+        webTestClient.post()
+                .uri("/items/{id}", id)
+                .body(BodyInserters.fromFormData("action", action.name()))
+                .exchange()
+                .expectStatus().is3xxRedirection()
+                .expectHeader().location("/login");
     }
 }

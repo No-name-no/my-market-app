@@ -35,7 +35,7 @@ class OrderServiceTest extends BaseServiceTest{
         ExecuteResponse response = new ExecuteResponse();
         response.setStatus(ExecuteResponse.StatusEnum.SUCCESSFUL);
         response.setRemainingBalance(new BigDecimal("100.00"));
-        when(paymentApi.executePayment(anyString(),any())).thenReturn(Mono.just(ResponseEntity.ok(response)));
+        when(paymentApi.executePayment(eq("test") ,any())).thenReturn(Mono.just(ResponseEntity.ok(response)));
 
         cartService.executeAction(id, ItemAction.PLUS).block();
         cartService.executeAction(id, ItemAction.PLUS).block();

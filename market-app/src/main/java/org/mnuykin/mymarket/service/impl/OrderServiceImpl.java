@@ -111,7 +111,7 @@ public class OrderServiceImpl implements OrderService {
                                .flatMap(orderDto ->
                                        paymentService.pay(orderDto.getTotalSum())
                                                .flatMap(isSuccessful -> isSuccessful
-                                                       ? cartRepository.deleteAll().thenReturn(orderDto)
+                                                       ? cartRepository.deleteAllByUserId(user.getId()).thenReturn(orderDto)
                                                        : Mono.error(new PaymentException("Payment error")))
                                )
                        )

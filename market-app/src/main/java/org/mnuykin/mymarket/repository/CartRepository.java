@@ -14,7 +14,6 @@ public interface CartRepository extends ReactiveCrudRepository<CartItem, Long> {
     Mono<Long> getCartTotal(@Param("userId") Long userId);
 
     Mono<CartItem> getCartItemByItemIdAndUserId(Long itemId, Long userId);
-    Mono<CartItem> findByItemId(Long itemId);
 
     @Query("""
             Select\s
@@ -26,4 +25,5 @@ public interface CartRepository extends ReactiveCrudRepository<CartItem, Long> {
     Flux<CartItemData> findCartItemDataAll(@Param("userId") Long userId);
 
     Flux<CartItem> findAllByUserId(Long userId);
+    Mono<Void> deleteAllByUserId(Long userId);
 }

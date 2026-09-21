@@ -52,6 +52,20 @@ public class PaymentControllerTest extends BaseControllerTest{
     }
 
     @Test
+    void executePaymentUnauthorized(){
+        String accountId = "test_acct_id";
+        ExecuteRequest executeRequest = new ExecuteRequest(BigDecimal.ONE);
+
+        webTestClient
+                .post()
+                .uri("/payment/execute/{accountId}", accountId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(executeRequest)
+                .exchange()
+                .expectStatus().isUnauthorized();
+    }
+
+    @Test
     void getPaymentBalance(){
         String accountId = "test_acct_id";
         BigDecimal balance = BigDecimal.ONE;
@@ -74,5 +88,19 @@ public class PaymentControllerTest extends BaseControllerTest{
 
         verify(paymentService, times(1)).getBalance(accountId);
         verifyNoMoreInteractions(paymentService);
+    }
+
+    @Test
+    void getPaymentBalanceForbidden(){
+        String accountId = "test_acct_id";
+        BigDecimal balance = BigDecimal.ONE;
+        Mockito.when(paymentService.getBalance(accountId))
+                .thenReturn(Mono.just(new BalanceResponse().balance(balance)));
+
+        webTestClient.mutateWith(mockJwt().authorities(new SimpleGrantedAuthority("_")))
+                .get()
+                .uri("/payment/balance/{accountId}", accountId)
+                .exchange()
+                .expectStatus().isForbidden();
     }
 }

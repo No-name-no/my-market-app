@@ -3,6 +3,7 @@ package org.mnuykin.payment.service.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
+import org.springframework.security.config.annotation.method.configuration.EnableReactiveMethodSecurity;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.core.GrantedAuthority;
@@ -17,6 +18,7 @@ import org.springframework.security.authentication.AbstractAuthenticationToken;
 
 @Configuration
 @EnableWebFluxSecurity
+@EnableReactiveMethodSecurity(proxyTargetClass = true)
 public class SecurityConfig {
 
     @Bean
@@ -44,7 +46,7 @@ public class SecurityConfig {
         // Императивный конвертер для извлечения ролей из кастомного claim
         var grantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
         grantedAuthoritiesConverter.setAuthorityPrefix(""); // роли без ROLE_
-        grantedAuthoritiesConverter.setAuthoritiesClaimName("resource_access.backend-service.roles");
+        grantedAuthoritiesConverter.setAuthoritiesClaimName("resource_access.market-service.roles");
 
         // Адаптер: Converter<Jwt, Collection<GrantedAuthority>> -> Converter<Jwt, Flux<GrantedAuthority>>
         Converter<Jwt, Flux<GrantedAuthority>> reactiveAuthoritiesConverter =

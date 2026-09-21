@@ -6,6 +6,9 @@ import org.mnuykin.mymarket.service.CacheService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.context.ImportTestcontainers;
+import org.springframework.security.oauth2.client.ReactiveOAuth2AuthorizedClientManager;
+import org.springframework.security.oauth2.client.registration.ReactiveClientRegistrationRepository;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.util.ArrayList;
@@ -20,6 +23,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class CacheServiceTest extends RedisTestContainer{
     @Autowired
     CacheService cacheService;
+
+    @MockitoBean
+    protected ReactiveClientRegistrationRepository reactiveClientRegistrationRepository;
+
+    @MockitoBean
+    protected ReactiveOAuth2AuthorizedClientManager reactiveOAuth2AuthorizedClientManager;
 
     @Test
     void test(){
