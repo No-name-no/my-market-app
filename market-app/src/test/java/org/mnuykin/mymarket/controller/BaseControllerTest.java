@@ -1,15 +1,20 @@
 package org.mnuykin.mymarket.controller;
 
+import org.mnuykin.mymarket.config.SecurityConfig;
+import org.mnuykin.mymarket.config.security.ReactiveUserDetailsServiceImpl;
+import org.mnuykin.mymarket.repository.UserRepository;
 import org.mnuykin.mymarket.service.CartService;
 import org.mnuykin.mymarket.service.ItemService;
 import org.mnuykin.mymarket.service.OrderService;
 import org.mnuykin.mymarket.service.PaymentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webflux.test.autoconfigure.WebFluxTest;
+import org.springframework.security.oauth2.client.ReactiveOAuth2AuthorizedClientManager;
+import org.springframework.security.oauth2.client.registration.ReactiveClientRegistrationRepository;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
-@WebFluxTest({CartController.class, ItemController.class, OrderController.class})
+@WebFluxTest({CartController.class, ItemController.class, OrderController.class, SecurityConfig.class, ReactiveUserDetailsServiceImpl.class})
 public abstract class BaseControllerTest {
     @Autowired
     protected WebTestClient webTestClient;
@@ -25,4 +30,13 @@ public abstract class BaseControllerTest {
 
     @MockitoBean
     protected PaymentService paymentService;
+
+    @MockitoBean
+    protected UserRepository userRepository;
+
+    @MockitoBean
+    protected ReactiveClientRegistrationRepository reactiveClientRegistrationRepository;
+
+    @MockitoBean
+    protected ReactiveOAuth2AuthorizedClientManager reactiveOAuth2AuthorizedClientManager;
 }

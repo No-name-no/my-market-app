@@ -8,6 +8,7 @@ import org.mnuykin.mymarket.model.ItemDto;
 import org.mnuykin.mymarket.model.OrderDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.test.context.support.WithMockUser;
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
@@ -29,11 +30,12 @@ class OrderServiceTest extends BaseServiceTest{
     private PaymentApi paymentApi;
 
     @Test
+    @WithMockUser(username = "test", password = "{bcrypt}$2a$10$jJt7W4VW0300oj.Lqon17uQpg7jL7qxjRQZvd/5VjR9fwFBzc5dI6")
     void buy(){
         ExecuteResponse response = new ExecuteResponse();
         response.setStatus(ExecuteResponse.StatusEnum.SUCCESSFUL);
         response.setRemainingBalance(new BigDecimal("100.00"));
-        when(paymentApi.executePayment(anyString(),any())).thenReturn(Mono.just(ResponseEntity.ok(response)));
+        when(paymentApi.executePayment(eq("test") ,any())).thenReturn(Mono.just(ResponseEntity.ok(response)));
 
         cartService.executeAction(id, ItemAction.PLUS).block();
         cartService.executeAction(id, ItemAction.PLUS).block();

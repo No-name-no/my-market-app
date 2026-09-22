@@ -8,11 +8,13 @@ import org.mnuykin.mymarket.service.CartService;
 import org.mnuykin.mymarket.service.PaymentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.web.reactive.function.BodyInserters;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import static org.mockito.Mockito.*;
+import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.csrf;
 
 class CartControllerTest extends BaseControllerTest {
 
@@ -23,6 +25,7 @@ class CartControllerTest extends BaseControllerTest {
     private PaymentService paymentService;
 
     @Test
+    @WithMockUser(username = "test")
     void getCart_shouldReturnCartViewWithItemsAndTotal() {
         when(cartService.getItems()).thenReturn(Flux.just(
                 new ItemDto(1L, "Product A", "Desc A", "img1.jpg", 100L, 2),
@@ -46,8 +49,17 @@ class CartControllerTest extends BaseControllerTest {
         verifyNoMoreInteractions(cartService);
     }
 
+    @Test
+    void getCart_anonymous_shouldRedirectLogin() {
+        webTestClient.get()
+                .uri("/cart/items")
+                .exchange()
+                .expectStatus().is3xxRedirection()
+                .expectHeader().location("/login");
+    }
 
     @Test
+    @WithMockUser(username = "test")
     void postCart_shouldExecuteActionAndReturnCartView() {
         final Long id = 1L;
         final ItemAction action = ItemAction.PLUS;
@@ -58,7 +70,7 @@ class CartControllerTest extends BaseControllerTest {
         when(cartService.getTotal()).thenReturn(Mono.just(99L));
         when(cartService.executeAction(id, action)).thenReturn(Mono.empty());
 
-        webTestClient.post()
+        webTestClient.mutateWith(csrf()).post()
                 .uri("/cart/items")
                 .body(BodyInserters.fromFormData("id", id.toString()).with("action", action.name()))
                 .exchange()
@@ -67,5 +79,18 @@ class CartControllerTest extends BaseControllerTest {
 
         verify(cartService, times(1)).executeAction(id, action);
         verifyNoMoreInteractions(cartService);
+    }
+
+    @Test
+    void postCart_anonymous_shouldRedirectLogin() {
+        final long id = 1L;
+        final ItemAction action = ItemAction.PLUS;
+
+        webTestClient.mutateWith(csrf()).post()
+                .uri("/cart/items")
+                .body(BodyInserters.fromFormData("id", Long.toString(id)).with("action", action.name()))
+                .exchange()
+                .expectStatus().is3xxRedirection()
+                .expectHeader().location("/login");
     }
 }

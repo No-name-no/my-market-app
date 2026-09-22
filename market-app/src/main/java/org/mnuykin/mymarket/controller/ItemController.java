@@ -2,10 +2,8 @@ package org.mnuykin.mymarket.controller;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
-import org.mnuykin.mymarket.model.ItemDto;
-import org.mnuykin.mymarket.model.ItemAction;
-import org.mnuykin.mymarket.model.ItemsSort;
-import org.mnuykin.mymarket.model.PagingDto;
+import org.mnuykin.mymarket.config.security.SecurityContextUtils;
+import org.mnuykin.mymarket.model.*;
 import org.mnuykin.mymarket.service.CartService;
 import org.mnuykin.mymarket.service.ItemService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,25 +34,33 @@ public class ItemController {
     }
 
     @GetMapping({"/", "/items"})
-    public Mono<String> getItems (@RequestParam (required = false) String search,
-                                 @RequestParam (defaultValue = ItemsSort.DEFAULT) ItemsSort sort,
-                                 @RequestParam (defaultValue = "1") @Min(1) @Max(Integer.MAX_VALUE) Integer pageNumber,
-                                 @RequestParam (defaultValue = "5") @Min(1) @Max(100) Integer pageSize,
-                                 Model model){
-        return itemService.findItems(search, sort, Math.max(0, pageNumber-1), pageSize)
-                .doOnNext(
-                        itemPage -> {
-                            model.addAttribute("items", toAttributeItems(itemPage.getContent()));
-                            model.addAttribute("search", search);
-                            model.addAttribute("sort", sort);
-                            model.addAttribute("paging", new PagingDto(
-                                    itemPage.getSize(),
-                                    itemPage.getNumber() + 1,
-                                    itemPage.isHasPrevious(),
-                                    itemPage.isHasNex()
-                            ));
-                        }
-                ).thenReturn("items");
+    public Mono<String> getItems(@RequestParam(required = false) String search,
+                                 @RequestParam(defaultValue = ItemsSort.DEFAULT) ItemsSort sort,
+                                 @RequestParam(defaultValue = "1") @Min(1) @Max(Integer.MAX_VALUE) Integer pageNumber,
+                                 @RequestParam(defaultValue = "5") @Min(1) @Max(100) Integer pageSize,
+                                 Model model) {
+
+        Mono<PageItemDto> pageMono =
+                itemService.findItems(search, sort, Math.max(0, pageNumber - 1), pageSize);
+        Mono<Boolean> authMono = SecurityContextUtils.isAuthenticated();
+
+        return Mono.zip(pageMono, authMono)
+                .doOnNext(tuple -> {
+                    PageItemDto itemPage = tuple.getT1();
+                    Boolean isAuthenticated = tuple.getT2();
+
+                    model.addAttribute("items", toAttributeItems(itemPage.getContent()));
+                    model.addAttribute("search", search);
+                    model.addAttribute("sort", sort);
+                    model.addAttribute("paging", new PagingDto(
+                            itemPage.getSize(),
+                            itemPage.getNumber() + 1,
+                            itemPage.isHasPrevious(),
+                            itemPage.isHasNext()
+                    ));
+                    model.addAttribute("isAuthenticated", isAuthenticated);
+                })
+                .thenReturn("items");
     }
 
     @PostMapping({"/", "/items"})
@@ -85,15 +91,19 @@ public class ItemController {
 
     @GetMapping("/items/{id}")
     public Mono<Rendering> getItem(@PathVariable Long id) {
-        return itemService.getItemById(id)
-                .map(itemDto -> Rendering.view("item")
-                        .modelAttribute("item", itemDto)
+        Mono<ItemDto> itemMono = itemService.getItemById(id);
+        Mono<Boolean> authMono = SecurityContextUtils.isAuthenticated();
+
+        return Mono.zip(itemMono, authMono)
+                .map(tuple -> Rendering.view("item")
+                        .modelAttribute("item", tuple.getT1())
+                        .modelAttribute("isAuthenticated", tuple.getT2())
                         .build());
     }
 
     @PostMapping("/items/{id}")
-    public Mono<Rendering> getItem2 (@PathVariable Long id,
-                                    ServerWebExchange exchange){
+    public Mono<Rendering> getItem(@PathVariable Long id,
+                                   ServerWebExchange exchange){
         return exchange.getFormData().flatMap(formData -> {
             final ItemAction action = ItemAction.valueOf(formData.getFirst("action"));
             return cartService.executeAction(id, action)

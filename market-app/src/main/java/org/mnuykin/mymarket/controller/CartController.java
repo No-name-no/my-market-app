@@ -37,7 +37,7 @@ public class CartController {
             model.addAttribute("items", tuple.getT1());
             model.addAttribute("total", tuple.getT2());
             model.addAttribute("isPaymentServiceNotAvailable", tuple.getT3() == Long.MIN_VALUE);
-            model.addAttribute("isUnsufficientFunds", tuple.getT3() != Long.MIN_VALUE
+            model.addAttribute("isInsufficientFunds", tuple.getT3() != Long.MIN_VALUE
                     && tuple.getT3() < tuple.getT2());
         }).thenReturn("cart");
     }
