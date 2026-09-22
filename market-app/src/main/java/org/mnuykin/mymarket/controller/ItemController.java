@@ -2,12 +2,11 @@ package org.mnuykin.mymarket.controller;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
-import org.mnuykin.mymarket.config.security.SecurityContextHolder;
+import org.mnuykin.mymarket.config.security.SecurityContextUtils;
 import org.mnuykin.mymarket.model.*;
 import org.mnuykin.mymarket.service.CartService;
 import org.mnuykin.mymarket.service.ItemService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.annotation.Validated;
@@ -43,7 +42,7 @@ public class ItemController {
 
         Mono<PageItemDto> pageMono =
                 itemService.findItems(search, sort, Math.max(0, pageNumber - 1), pageSize);
-        Mono<Boolean> authMono = SecurityContextHolder.isAuthenticated();
+        Mono<Boolean> authMono = SecurityContextUtils.isAuthenticated();
 
         return Mono.zip(pageMono, authMono)
                 .doOnNext(tuple -> {
@@ -57,7 +56,7 @@ public class ItemController {
                             itemPage.getSize(),
                             itemPage.getNumber() + 1,
                             itemPage.isHasPrevious(),
-                            itemPage.isHasNex()
+                            itemPage.isHasNext()
                     ));
                     model.addAttribute("isAuthenticated", isAuthenticated);
                 })
@@ -93,7 +92,7 @@ public class ItemController {
     @GetMapping("/items/{id}")
     public Mono<Rendering> getItem(@PathVariable Long id) {
         Mono<ItemDto> itemMono = itemService.getItemById(id);
-        Mono<Boolean> authMono = SecurityContextHolder.isAuthenticated();
+        Mono<Boolean> authMono = SecurityContextUtils.isAuthenticated();
 
         return Mono.zip(itemMono, authMono)
                 .map(tuple -> Rendering.view("item")
@@ -103,8 +102,8 @@ public class ItemController {
     }
 
     @PostMapping("/items/{id}")
-    public Mono<Rendering> getItem2 (@PathVariable Long id,
-                                    ServerWebExchange exchange){
+    public Mono<Rendering> getItem(@PathVariable Long id,
+                                   ServerWebExchange exchange){
         return exchange.getFormData().flatMap(formData -> {
             final ItemAction action = ItemAction.valueOf(formData.getFirst("action"));
             return cartService.executeAction(id, action)

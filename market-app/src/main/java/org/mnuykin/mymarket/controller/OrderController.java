@@ -1,6 +1,7 @@
 package org.mnuykin.mymarket.controller;
 
-import org.mnuykin.mymarket.config.security.SecurityContextHolder;
+import lombok.extern.slf4j.Slf4j;
+import org.mnuykin.mymarket.config.security.SecurityContextUtils;
 import org.mnuykin.mymarket.model.OrderDto;
 import org.mnuykin.mymarket.service.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +17,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.List;
 
+@Slf4j
 @Controller
 public class OrderController {
     final private OrderService orderService;
@@ -28,7 +30,7 @@ public class OrderController {
     @GetMapping("/orders")
     public Mono<String> getOrders(Model model) {
         Mono<List<OrderDto>> ordersMono = orderService.getOrder().collectList();
-        Mono<Boolean> authMono = SecurityContextHolder.isAuthenticated();
+        Mono<Boolean> authMono = SecurityContextUtils.isAuthenticated();
 
         return Mono.zip(ordersMono, authMono)
                 .doOnNext(tuple -> {
@@ -43,7 +45,7 @@ public class OrderController {
                                  @RequestParam(defaultValue = "false") boolean newOrder,
                                  Model model) {
         Mono<OrderDto> orderMono = orderService.getOrderById(id);
-        Mono<Boolean> authMono = SecurityContextHolder.isAuthenticated();
+        Mono<Boolean> authMono = SecurityContextUtils.isAuthenticated();
 
         return Mono.zip(orderMono, authMono)
                 .doOnNext(tuple -> {
@@ -64,7 +66,7 @@ public class OrderController {
                                 .build().toUri().toString()
                         ).build())
                 .onErrorResume(e -> {
-                    e.printStackTrace();
+                    log.error("Failed to create order", e);
                     return Mono.just(Rendering.redirectTo("/cart/items").build());
                 });
     }

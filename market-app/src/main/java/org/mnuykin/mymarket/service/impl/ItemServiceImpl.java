@@ -1,7 +1,7 @@
 package org.mnuykin.mymarket.service.impl;
 
 import org.mnuykin.mymarket.advice.exception.NotFoundException;
-import org.mnuykin.mymarket.config.security.SecurityContextHolder;
+import org.mnuykin.mymarket.config.security.SecurityContextUtils;
 import org.mnuykin.mymarket.entity.Item;
 import org.mnuykin.mymarket.mapper.ItemMapper;
 import org.mnuykin.mymarket.model.ItemDto;
@@ -101,10 +101,10 @@ public class ItemServiceImpl implements ItemService {
     }
 
     private Mono<ItemDto> getItemDtoWithDataCard(Item item){
-        return SecurityContextHolder.isAuthenticated().flatMap(isAuth -> {
+        return SecurityContextUtils.isAuthenticated().flatMap(isAuth -> {
             if(isAuth){
-                return SecurityContextHolder.getCurrentUsername()
-                        .flatMap(userRepository::getUsersByLogin)
+                return SecurityContextUtils.getCurrentUsername()
+                        .flatMap(userRepository::getUserByLogin)
                         .flatMap(user -> cartRepository
                                 .getCartItemByItemIdAndUserId(item.getId(), user.getId())
                                 .map(cartItem -> itemMapper.toDto(item, cartItem.getCount()))

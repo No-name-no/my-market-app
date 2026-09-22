@@ -1,7 +1,7 @@
 package org.mnuykin.mymarket.service.impl;
 
 import org.mnuykin.mymarket.advice.exception.NotFoundException;
-import org.mnuykin.mymarket.config.security.SecurityContextHolder;
+import org.mnuykin.mymarket.config.security.SecurityContextUtils;
 import org.mnuykin.mymarket.entity.CartItem;
 import org.mnuykin.mymarket.entity.Item;
 import org.mnuykin.mymarket.entity.User;
@@ -43,9 +43,9 @@ public class CartServiceImpl implements CartService {
     @Override
     @Transactional
     public Mono<Void> executeAction(Long id, ItemAction action){
-        return SecurityContextHolder
+        return SecurityContextUtils
                 .getCurrentUsername()
-                .flatMap(userRepository::getUsersByLogin)
+                .flatMap(userRepository::getUserByLogin)
                 .flatMap(user -> itemRepository.getItemById(id)
                         .switchIfEmpty(Mono.error(new NotFoundException(id)))
                         .flatMap(item -> cartRepository.getCartItemByItemIdAndUserId(item.getId(), user.getId())
@@ -69,8 +69,8 @@ public class CartServiceImpl implements CartService {
     @Override
     @Transactional(readOnly = true)
     public Flux<ItemDto> getItems(){
-        return SecurityContextHolder.getCurrentUsername()
-                .flatMap(userRepository::getUsersByLogin)
+        return SecurityContextUtils.getCurrentUsername()
+                .flatMap(userRepository::getUserByLogin)
                 .flatMapMany(this::getItemsByUser);
     }
 
@@ -91,9 +91,9 @@ public class CartServiceImpl implements CartService {
     @Override
     @Transactional(readOnly = true)
     public Mono<Long> getTotal() {
-        return SecurityContextHolder
+        return SecurityContextUtils
                 .getCurrentUsername()
-                .flatMap(userRepository::getUsersByLogin)
+                .flatMap(userRepository::getUserByLogin)
                 .flatMap(user ->
                         cartRepository.getCartTotal(user.getId()).switchIfEmpty(Mono.just(0L))
                 );

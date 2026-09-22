@@ -3,7 +3,7 @@ package org.mnuykin.mymarket.service.impl;
 import org.mnuykin.mymarket.advice.exception.CartEmptyException;
 import org.mnuykin.mymarket.advice.exception.NotFoundException;
 import org.mnuykin.mymarket.advice.exception.PaymentException;
-import org.mnuykin.mymarket.config.security.SecurityContextHolder;
+import org.mnuykin.mymarket.config.security.SecurityContextUtils;
 import org.mnuykin.mymarket.entity.Item;
 import org.mnuykin.mymarket.entity.Order;
 import org.mnuykin.mymarket.entity.OrderItem;
@@ -12,7 +12,7 @@ import org.mnuykin.mymarket.mapper.OrderItemMapper;
 import org.mnuykin.mymarket.mapper.OrderMapper;
 import org.mnuykin.mymarket.model.OrderDto;
 import org.mnuykin.mymarket.repository.*;
-import org.mnuykin.mymarket.repository.dto.CartItemData;
+import org.mnuykin.mymarket.model.CartItemData;
 import org.mnuykin.mymarket.service.OrderService;
 import org.mnuykin.mymarket.service.PaymentService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,8 +54,8 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional(readOnly = true)
     public Flux<OrderDto> getOrder() {
-        return SecurityContextHolder.getCurrentUsername()
-                .flatMap(userRepository::getUsersByLogin)
+        return SecurityContextUtils.getCurrentUsername()
+                .flatMap(userRepository::getUserByLogin)
                 .flatMapMany(this::getUserOrder);
     }
 
@@ -78,8 +78,8 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional(readOnly = true)
     public Mono<OrderDto> getOrderById(Long id) {
-        return SecurityContextHolder.getCurrentUsername()
-                .flatMap(userRepository::getUsersByLogin)
+        return SecurityContextUtils.getCurrentUsername()
+                .flatMap(userRepository::getUserByLogin)
                 .flatMap(user -> getOrderByIdAndUser(id, user));
     }
 
@@ -103,18 +103,20 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional
     public Mono<OrderDto> create() {
-        return  SecurityContextHolder.getCurrentUsername()
-                .flatMap(userRepository::getUsersByLogin)
-                .flatMap(user -> getCartItemData(user)
-                        .flatMap(cartItems -> saveOrder(cartItems, user)
-                               .flatMap(saveOrder -> saveOrderData(saveOrder, cartItems))
-                               .flatMap(orderDto ->
-                                       paymentService.pay(orderDto.getTotalSum())
-                                               .flatMap(isSuccessful -> isSuccessful
-                                                       ? cartRepository.deleteAllByUserId(user.getId()).thenReturn(orderDto)
-                                                       : Mono.error(new PaymentException("Payment error")))
-                               )
-                       )
+        return  SecurityContextUtils.getCurrentUsername()
+                .flatMap(userRepository::getUserByLogin)
+                .flatMap(user -> cartRepository.getCartTotal(user.getId())
+                        .flatMap(paymentService::pay)
+                        .flatMap(isSuccessful -> isSuccessful
+                                ? getCartItemData(user).flatMap(
+                                        cartItems -> saveOrder(cartItems, user)
+                                                     .flatMap(saveOrder -> saveOrderData(saveOrder, cartItems))
+                                                     .flatMap(orderDto -> cartRepository.deleteAllByUserId
+                                                             (user.getId()).thenReturn(orderDto)
+                                                     )
+                                )
+                                : Mono.error(new PaymentException("Payment error"))
+                        )
                 );
     }
 

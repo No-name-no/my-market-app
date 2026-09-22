@@ -23,7 +23,7 @@ public class ReactiveUserDetailsServiceImpl implements ReactiveUserDetailsServic
 
     @Override
     public Mono<UserDetails> findByUsername(String username) {
-        return userRepository.getUsersByLogin(username)
+        return userRepository.getUserByLogin(username)
                 .switchIfEmpty(Mono.error(new UsernameNotFoundException("Пользователь не найден: " + username)))
                 .map(user -> User.builder()
                         .username(user.getLogin())

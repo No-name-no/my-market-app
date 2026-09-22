@@ -2,7 +2,7 @@ package org.mnuykin.mymarket.repository;
 
 import io.lettuce.core.dynamic.annotation.Param;
 import org.mnuykin.mymarket.entity.CartItem;
-import org.mnuykin.mymarket.repository.dto.CartItemData;
+import org.mnuykin.mymarket.model.CartItemData;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import reactor.core.publisher.Flux;
