@@ -14,6 +14,6 @@ public class PageItemDto {
     private int size;
     private int number;
     private boolean hasPrevious;
-    private boolean hasNex;
+    private boolean hasNext;
     private long total;
 }

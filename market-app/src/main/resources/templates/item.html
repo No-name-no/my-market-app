@@ -1,5 +1,7 @@
 <!DOCTYPE html>
-<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<html lang="ru"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 
 <head>
     <meta charset="utf-8">
@@ -16,9 +18,22 @@
                     <h2>
                         <span class="badge text-bg-success">Витрина магазина</span>
                     </h2>
-                    <a href="/orders" class="btn btn-secondary ms-auto bi bi-file-earmark-text"> Заказы</a>
-                    <a href="/cart/items" class="btn btn-secondary bi bi-cart4"> Корзина</a>
+                    <a th:if="${isAuthenticated}" href="/orders" class="btn btn-secondary ms-auto bi bi-file-earmark-text"> Заказы</a>
+                    <a th:if="${isAuthenticated}" href="/cart/items" class="btn btn-secondary bi bi-cart4"> Корзина</a>
                     <a href="/items" class="btn btn-secondary bi bi-arrow-left-square"> Главная</a>
+                    <!-- ====== Блок аутентификации ====== -->
+                    <a th:if="!${isAuthenticated}"
+                       th:href="@{/login}"
+                       class="btn ms-auto btn-success bi bi-box-arrow-in-right"> Войти</a>
+
+                    <!-- Если пользователь аутентифицирован -->
+                    <div th:if="${isAuthenticated}" class="d-flex align-items-center gap-2">
+                        <form th:action="@{/logout}" method="post" class="m-0">
+                            <button type="submit" class="btn btn-outline-danger bi bi-box-arrow-right">
+                                Выйти
+                            </button>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
@@ -26,7 +41,7 @@
         <div class="row p-2">
             <div class="col">
                 <div class="card">
-                    <img class="p-2" th:src="${'/'+item.imgPath}" alt="Нет изображения" width="300" height="300">
+                    <img class="p-2" th:src="${'/img/'+item.imgPath}" alt="Нет изображения" width="300" height="300">
                     <div class="card-body">
                         <h5 class="card-title" th:text="${item.title}"></h5>
                         <h5>
@@ -34,7 +49,7 @@
                         </h5>
                         <p class="card-text" th:text="${item.description}"></p>
                         <form th:action="@{${'/items/'+item.id}}" method="post">
-                            <div class="hstack gap-3">
+                            <div th:if="${isAuthenticated}" class="hstack gap-3">
                                 <button type="submit" class="btn btn-outline-secondary" name="action" value="MINUS" th:disabled="${item.count == 0}">-</button>
                                 <span th:text="${item.count}"></span>
                                 <button type="submit" class="btn btn-outline-secondary" name="action" value="PLUS">+</button>

@@ -5,6 +5,7 @@ import org.mnuykin.mymarket.model.ItemAction;
 import org.mnuykin.mymarket.model.ItemDto;
 import org.mnuykin.mymarket.service.impl.CartServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.test.context.support.WithMockUser;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -13,6 +14,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.when;
 
 class CartServiceTest extends BaseServiceTest {
     @Autowired
@@ -22,9 +24,11 @@ class CartServiceTest extends BaseServiceTest {
     private CacheService cacheService;
 
     @Test
+    @WithMockUser(username = "test", password = "{bcrypt}$2a$10$jJt7W4VW0300oj.Lqon17uQpg7jL7qxjRQZvd/5VjR9fwFBzc5dI6")
     void test(){
         doReturn(Mono.just(true)).when(cacheService).save(anyString(), anyList());
         doReturn(Mono.just(true)).when(cacheService).save(anyString(), any(Object.class));
+        when(cacheService.get(any())).thenReturn(Mono.empty());
 
         assertEquals(0L, cartService.getTotal().block());
 

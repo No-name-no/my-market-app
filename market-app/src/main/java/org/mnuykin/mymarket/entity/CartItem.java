@@ -19,6 +19,9 @@ public class CartItem {
     @Column("id")
     Long id;
 
+    @Column("user_id")
+    private Long userId;
+
     @Column("item_id")
     private Long itemId;
 

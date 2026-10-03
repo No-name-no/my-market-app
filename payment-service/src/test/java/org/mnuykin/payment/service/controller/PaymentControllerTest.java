@@ -9,12 +9,15 @@ import org.mnuykin.server.domain.ExecuteResponse;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
-import org.springframework.web.reactive.function.BodyInserters;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
+import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.mockJwt;
 
 public class PaymentControllerTest extends BaseControllerTest{
     @Autowired
@@ -27,8 +30,12 @@ public class PaymentControllerTest extends BaseControllerTest{
         Mockito.when(paymentService.executePayment(eq(accountId), Mockito.<Mono<ExecuteRequest>>any()))
                 .thenReturn(Mono.just(new ExecuteResponse().status(ExecuteResponse.StatusEnum.REJECTED)));
 
-        webTestClient.post().uri("/payment/execute/{accountId}", accountId).
-                body(BodyInserters.fromValue(executeRequest))
+        webTestClient
+                .mutateWith(mockJwt().authorities(new SimpleGrantedAuthority("SERVICE")))
+                .post()
+                .uri("/payment/execute/{accountId}", accountId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(executeRequest)
                 .exchange()
                 .expectStatus().isOk()
                 .expectHeader().contentTypeCompatibleWith(MediaType.APPLICATION_JSON)
@@ -45,13 +52,29 @@ public class PaymentControllerTest extends BaseControllerTest{
     }
 
     @Test
+    void executePaymentUnauthorized(){
+        String accountId = "test_acct_id";
+        ExecuteRequest executeRequest = new ExecuteRequest(BigDecimal.ONE);
+
+        webTestClient
+                .post()
+                .uri("/payment/execute/{accountId}", accountId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(executeRequest)
+                .exchange()
+                .expectStatus().isUnauthorized();
+    }
+
+    @Test
     void getPaymentBalance(){
         String accountId = "test_acct_id";
         BigDecimal balance = BigDecimal.ONE;
         Mockito.when(paymentService.getBalance(accountId))
                 .thenReturn(Mono.just(new BalanceResponse().balance(balance)));
 
-        webTestClient.get().uri("/payment/balance/{accountId}", accountId)
+        webTestClient.mutateWith(mockJwt().authorities(new SimpleGrantedAuthority("SERVICE")))
+                .get()
+                .uri("/payment/balance/{accountId}", accountId)
                 .exchange()
                 .expectStatus().isOk()
                 .expectHeader().contentTypeCompatibleWith(MediaType.APPLICATION_JSON)
@@ -65,5 +88,19 @@ public class PaymentControllerTest extends BaseControllerTest{
 
         verify(paymentService, times(1)).getBalance(accountId);
         verifyNoMoreInteractions(paymentService);
+    }
+
+    @Test
+    void getPaymentBalanceForbidden(){
+        String accountId = "test_acct_id";
+        BigDecimal balance = BigDecimal.ONE;
+        Mockito.when(paymentService.getBalance(accountId))
+                .thenReturn(Mono.just(new BalanceResponse().balance(balance)));
+
+        webTestClient.mutateWith(mockJwt().authorities(new SimpleGrantedAuthority("_")))
+                .get()
+                .uri("/payment/balance/{accountId}", accountId)
+                .exchange()
+                .expectStatus().isForbidden();
     }
 }

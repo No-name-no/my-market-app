@@ -10,7 +10,7 @@ public class CartItemTest {
 
     @BeforeEach
     void prepareCartItem(){
-        cartItem = new CartItem(1L, 1L, Integer.MAX_VALUE);
+        cartItem = new CartItem(1L, 1L, 1L, Integer.MAX_VALUE);
     }
 
     @Test
